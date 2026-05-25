@@ -3,6 +3,11 @@ dist
 .DS_Store
 *.log
 
+# Env files (contain Clerk keys)
+.env
+.env.local
+.env.*.local
+
 # TypeScript build outputs
 *.tsbuildinfo
 vite.config.js

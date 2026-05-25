@@ -1,10 +1,35 @@
+import { ClerkProvider } from '@clerk/react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './index.css';
 import App from './App';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+
+const root = createRoot(document.getElementById('root')!);
+
+// publishableKey が未設定の環境では Clerk を無効化して動作させる
+// (HomeScreen 側の auth UI は ClerkProvider 配下でないと表示できないので、
+//  キー未設定時は <App /> をそのままレンダー)
+if (PUBLISHABLE_KEY) {
+  root.render(
+    <StrictMode>
+      <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
+        <App />
+      </ClerkProvider>
+    </StrictMode>,
+  );
+} else {
+  // dev で env が無い、または GH Pages の secret 未設定時のフォールバック
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[simple1] VITE_CLERK_PUBLISHABLE_KEY is not set. Auth UI will be hidden.',
+    );
+  }
+  root.render(
+    <StrictMode>
+      <App />
+    </StrictMode>,
+  );
+}

@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Show, SignInButton, SignUpButton, UserButton } from '@clerk/react';
 import type { Card, Category, StudyMode } from '../types';
 import { CATEGORIES } from '../types';
 import { categorize, isDue, isWeak, todayISO } from '../lib/srs';
@@ -47,6 +48,33 @@ export default function HomeScreen({ cards, caseProgress, onStart, onOpenCases }
 
   return (
     <div className="mx-auto max-w-md px-4 pt-8 pb-28">
+      {/* 上部 nav: auth コントロール (Clerk publishable key 未設定時は非表示) */}
+      {import.meta.env.VITE_CLERK_PUBLISHABLE_KEY && (
+        <div className="flex items-center justify-end gap-1.5 mb-5 min-h-[32px]">
+          <Show when="signed-out">
+            <SignInButton mode="modal">
+              <button className="text-[12px] font-semibold whitespace-nowrap text-[var(--color-text-secondary)] hover:text-[var(--color-text)] px-2.5 py-1.5 rounded-lg no-tap-highlight">
+                ログイン
+              </button>
+            </SignInButton>
+            <SignUpButton mode="modal">
+              <button className="text-[12px] font-semibold whitespace-nowrap text-white bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] px-3 py-1.5 rounded-lg shadow-primary-sm no-tap-highlight">
+                新規登録
+              </button>
+            </SignUpButton>
+          </Show>
+          <Show when="signed-in">
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: 'w-8 h-8',
+                },
+              }}
+            />
+          </Show>
+        </div>
+      )}
+
       <header className="mb-7">
         <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-tertiary)] uppercase mb-1.5">
           SG · Information Security
