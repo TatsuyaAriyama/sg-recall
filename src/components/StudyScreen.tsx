@@ -7,13 +7,14 @@ type Props = {
   card: Card;
   index: number;
   total: number;
-  onAnswer: (correct: boolean, userAnswer: string) => void;
+  onMark: (correct: boolean, userAnswer: string) => void;
+  onNext: () => void;
   onQuit: () => void;
 };
 
 type Phase = 'input' | 'hint' | 'reveal';
 
-export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Props) {
+export default function StudyScreen({ card, index, total, onMark, onNext, onQuit }: Props) {
   const [phase, setPhase] = useState<Phase>('input');
   const [input, setInput] = useState('');
   const [revision, setRevision] = useState('');
@@ -43,6 +44,8 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
     if (ev.passed) {
       setWasPerfect(true);
       setPhase('reveal');
+      // 解説表示時点で SRS に「できた」として反映
+      onMark(true, input);
     } else {
       setWasPerfect(false);
       setRevision(input);
@@ -53,10 +56,12 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
 
   function reveal() {
     setPhase('reveal');
+    // 解説表示時点で SRS に「もう一度」として反映
+    onMark(false, revision);
   }
 
   function next() {
-    onAnswer(wasPerfect, wasPerfect ? input : revision);
+    onNext();
   }
 
   useEffect(() => {

@@ -50,6 +50,7 @@ type Action =
   | { type: 'init'; cards: Card[]; meta: Meta; caseProgress: Record<string, CaseProgress> }
   | { type: 'start'; ids: string[]; mode: StudyMode; category: Category | 'all' }
   | { type: 'mark'; correct: boolean; userAnswer: string }
+  | { type: 'advance' }
   | { type: 'finish' }
   | { type: 'home' }
   // 科目B
@@ -82,6 +83,7 @@ function reducer(state: State, action: Action): State {
       };
 
     case 'mark': {
+      // 解説表示時点でカード状態 + セッション統計を更新（index は進めない）
       if (!state.session) return state;
       const id = state.session.queue[state.session.index];
       const cards = state.cards.map((c) => {
@@ -89,14 +91,21 @@ function reducer(state: State, action: Action): State {
         const updated = action.correct ? markCorrect(c) : markWrong(c);
         return { ...updated, lastUserAnswer: action.userAnswer };
       });
-      const nextIndex = state.session.index + 1;
       const session: Session = {
         ...state.session,
-        index: nextIndex,
         correct: state.session.correct + (action.correct ? 1 : 0),
         wrong: state.session.wrong + (action.correct ? 0 : 1),
       };
       return { ...state, cards, session };
+    }
+
+    case 'advance': {
+      // 「次へ」押下時。index を進めるだけ
+      if (!state.session) return state;
+      return {
+        ...state,
+        session: { ...state.session, index: state.session.index + 1 },
+      };
     }
 
     case 'finish': {
@@ -297,7 +306,8 @@ export default function App() {
           card={currentCard}
           index={state.session.index}
           total={state.session.queue.length}
-          onAnswer={(correct, userAnswer) => dispatch({ type: 'mark', correct, userAnswer })}
+          onMark={(correct, userAnswer) => dispatch({ type: 'mark', correct, userAnswer })}
+          onNext={() => dispatch({ type: 'advance' })}
           onQuit={() => dispatch({ type: 'finish' })}
         />
       )}
