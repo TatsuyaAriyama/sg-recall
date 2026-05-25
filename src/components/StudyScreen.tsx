@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Card } from '../types';
 import { evaluate } from '../lib/evaluate';
+import Icon from './Icon';
 
 type Props = {
   card: Card;
@@ -19,18 +20,14 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
   const [wasPerfect, setWasPerfect] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // カードが変わったらリセット & フォーカス
   useEffect(() => {
     setPhase('input');
     setInput('');
     setRevision('');
     setWasPerfect(false);
-    requestAnimationFrame(() => {
-      textareaRef.current?.focus();
-    });
+    requestAnimationFrame(() => textareaRef.current?.focus());
   }, [card.id]);
 
-  // 評価結果（hint/reveal フェーズで参照）
   const evaluation = useMemo(() => evaluate(input, card.keywords), [input, card.keywords]);
 
   function check() {
@@ -42,10 +39,7 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
       setWasPerfect(false);
       setRevision(input);
       setPhase('hint');
-      // hint 表示時は revision テキストエリアにフォーカス
-      requestAnimationFrame(() => {
-        textareaRef.current?.focus();
-      });
+      requestAnimationFrame(() => textareaRef.current?.focus());
     }
   }
 
@@ -54,12 +48,9 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
   }
 
   function next() {
-    // 一発正解 → できた / ヒント経由 → もう一度
-    // 保存する解答: 一発正解なら最初の入力、ヒント経由なら修正後の入力
     onAnswer(wasPerfect, wasPerfect ? input : revision);
   }
 
-  // キーボードショートカット
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       const isSubmit = (e.ctrlKey || e.metaKey) && e.key === 'Enter';
@@ -83,168 +74,218 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, input, revision, wasPerfect]);
 
-  const progress = total === 0 ? 0 : Math.round((index / total) * 100);
+  const progress = total === 0 ? 0 : (index / total) * 100;
 
   return (
-    <div className="mx-auto max-w-md px-4 py-4 pb-6 flex flex-col min-h-full">
-      {/* 進捗バー */}
-      <div className="mb-4">
-        <div className="flex items-center justify-between text-[11px] text-black/60 mb-1.5">
-          <button onClick={onQuit} className="hover:text-black">← 中断</button>
-          <span className="tabular-nums">{index + 1} / {total}</span>
+    <div className="mx-auto max-w-md min-h-full flex flex-col">
+      {/* Header */}
+      <header className="glass sticky top-0 z-10 px-4 pt-4 pb-3">
+        <div className="flex items-center justify-between mb-2">
+          <button
+            onClick={onQuit}
+            className="flex items-center gap-1 text-[13px] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] no-tap-highlight"
+          >
+            <Icon name="chevron-left" size={16} />
+            中断
+          </button>
+          <span className="text-[11px] font-semibold tabular-nums text-[var(--color-text-secondary)]">
+            {index + 1} <span className="opacity-50">/ {total}</span>
+          </span>
         </div>
-        <div className="h-1 rounded-full bg-white border border-[var(--color-border)] overflow-hidden">
+        <div className="h-1.5 rounded-full bg-[var(--color-surface-3)] overflow-hidden">
           <div
-            className="h-full bg-[var(--color-accent)] transition-all duration-300"
-            style={{ width: `${progress}%` }}
+            className="h-full rounded-full transition-all duration-500"
+            style={{
+              width: `${progress}%`,
+              backgroundImage:
+                'linear-gradient(90deg, var(--color-accent) 0%, #7375e2 100%)',
+            }}
           />
         </div>
-      </div>
+      </header>
 
-      {/* 用語 */}
-      <div className="mb-4">
-        <span className="inline-block text-[10px] tracking-wide rounded-full border border-[var(--color-border)] bg-white text-black px-2 py-0.5">
-          {card.category}
-        </span>
-        <h2 className="mt-3 text-2xl font-semibold leading-snug break-words text-black">
-          {card.term}
-        </h2>
-      </div>
+      <div className="flex-1 px-4 pt-6 pb-6 flex flex-col">
+        {/* 用語 */}
+        <div className="mb-5">
+          <span className="inline-block text-[10px] font-semibold tracking-wider uppercase rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)] px-2.5 py-1">
+            {card.category}
+          </span>
+          <h2 className="mt-3 text-[26px] font-bold leading-tight tracking-tight text-[var(--color-text)] break-words">
+            {card.term}
+          </h2>
+        </div>
 
-      {phase === 'input' && (
-        <>
-          <div className="mb-3">
-            <textarea
-              ref={textareaRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              rows={3}
-              placeholder="一行で説明を書く..."
-              className="w-full rounded-lg border border-[var(--color-border)] bg-white text-black placeholder:text-black/40 focus:border-[var(--color-accent)] focus:border-2 outline-none px-3 py-2.5 text-sm resize-none transition-colors"
-            />
-          </div>
-          <button
-            onClick={check}
-            disabled={input.trim().length === 0}
-            className="w-full rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:bg-white disabled:text-black/40 disabled:border disabled:border-[var(--color-border)] text-white font-semibold py-3 transition-colors"
-          >
-            答え合わせ <span className="text-xs opacity-70 ml-1">(Ctrl+Enter)</span>
-          </button>
-        </>
-      )}
-
-      {phase === 'hint' && (
-        <>
-          {/* 評価 + ヒント */}
-          <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-3 mb-3 fade-in">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] text-black/60">評価</span>
-              <span className="text-xs tabular-nums text-black/80">
-                {evaluation.matchedGroups} / {evaluation.totalGroups} 要素
-              </span>
+        {phase === 'input' && (
+          <>
+            <div className="mb-4">
+              <textarea
+                ref={textareaRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                rows={3}
+                placeholder="一行で説明を書く..."
+                className="focus-ring w-full rounded-xl bg-[var(--color-surface)] shadow-soft text-[var(--color-text)] placeholder:text-[var(--color-text-tertiary)] outline-none px-4 py-3 text-[15px] leading-relaxed resize-none transition-all"
+              />
             </div>
-            {evaluation.matched.length > 0 && (
-              <div className="mb-2">
-                <div className="text-[10px] text-black/60 mb-1">含まれている観点</div>
-                <div className="flex flex-wrap gap-1">
-                  {evaluation.matched.map((m) => (
-                    <span
-                      key={m}
-                      className="text-[11px] rounded-full border border-[var(--color-border)] bg-white text-black px-2 py-0.5"
-                    >
-                      ✓ {m}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-            {evaluation.missing.length > 0 && (
-              <div>
-                <div className="text-[10px] text-[var(--color-accent)] font-semibold mb-1">ヒント: 抜けている観点</div>
-                <div className="flex flex-wrap gap-1">
-                  {evaluation.missing.map((m) => (
-                    <span
-                      key={m}
-                      className="text-[11px] rounded-full border-2 border-[var(--color-accent)] bg-white text-[var(--color-accent)] font-medium px-2 py-0.5"
-                    >
-                      {m}
-                    </span>
-                  ))}
-                </div>
-                <div className="text-[11px] text-black/60 mt-2 leading-relaxed">
-                  上のキーワードを踏まえて回答を修正してみてください。
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* あなたの最初の解答（参照用） */}
-          <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 mb-3">
-            <div className="text-[10px] text-black/60 mb-0.5">最初の解答</div>
-            <div className="text-xs leading-relaxed whitespace-pre-wrap text-black/70">{input}</div>
-          </div>
-
-          {/* 修正解答 */}
-          <div className="mb-3">
-            <div className="text-[10px] text-black/60 mb-1">修正解答</div>
-            <textarea
-              ref={textareaRef}
-              value={revision}
-              onChange={(e) => setRevision(e.target.value)}
-              rows={3}
-              placeholder="ヒントを踏まえて書き直す..."
-              className="w-full rounded-lg border border-[var(--color-border)] bg-white text-black placeholder:text-black/40 focus:border-[var(--color-accent)] focus:border-2 outline-none px-3 py-2.5 text-sm resize-none transition-colors"
-            />
-          </div>
-
-          <button
-            onClick={reveal}
-            className="w-full rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold py-3 transition-colors"
-          >
-            解説を見る <span className="text-xs opacity-70 ml-1">(Ctrl+Enter)</span>
-          </button>
-        </>
-      )}
-
-      {phase === 'reveal' && (
-        <>
-          <div className="space-y-3 mb-4 fade-in">
-            {/* 一発正解バッジ or ヒント経由バッジ */}
-            <div
-              className={`inline-flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-2.5 py-1 ${
-                wasPerfect
-                  ? 'bg-[var(--color-accent)] text-white'
-                  : 'border border-[var(--color-border)] bg-white text-black/70'
-              }`}
+            <button
+              onClick={check}
+              disabled={input.trim().length === 0}
+              className="btn-primary w-full rounded-2xl font-semibold py-3.5 text-[15px] shadow-primary disabled:shadow-none flex items-center justify-center gap-2 no-tap-highlight"
             >
-              {wasPerfect ? '一発正解' : 'ヒント参照あり'}
+              <Icon name="check-circle" size={16} />
+              答え合わせ <span className="text-[11px] opacity-75 ml-1">⌘↵</span>
+            </button>
+          </>
+        )}
+
+        {phase === 'hint' && (
+          <>
+            <div className="rounded-2xl bg-[var(--color-surface)] shadow-soft px-4 py-4 mb-3 slide-up">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[var(--color-accent)]">
+                  <Icon name="lightbulb" size={14} />
+                  ヒント
+                </div>
+                <span className="text-[11px] tabular-nums text-[var(--color-text-secondary)]">
+                  {evaluation.matchedGroups} / {evaluation.totalGroups} 要素
+                </span>
+              </div>
+
+              {evaluation.matched.length > 0 && (
+                <div className="mb-3">
+                  <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-1.5">
+                    含まれている観点
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {evaluation.matched.map((m) => (
+                      <span
+                        key={m}
+                        className="text-[11px] rounded-full bg-[var(--color-surface-3)] text-[var(--color-text-secondary)] px-2.5 py-1 flex items-center gap-1"
+                      >
+                        <Icon name="check" size={11} className="text-[var(--color-success)]" />
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {evaluation.missing.length > 0 && (
+                <div>
+                  <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-accent)] mb-1.5">
+                    抜けている観点
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {evaluation.missing.map((m) => (
+                      <span
+                        key={m}
+                        className="text-[12px] font-semibold rounded-full bg-[var(--color-accent-soft)] text-[var(--color-accent)] px-2.5 py-1"
+                      >
+                        {m}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-[12px] text-[var(--color-text-secondary)] mt-3 leading-relaxed">
+                    上のキーワードを踏まえて修正してください。
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* 解答（最終） */}
-            {(wasPerfect ? input : revision).trim() && (
-              <div className="rounded-lg border border-[var(--color-border)] bg-white px-3 py-2.5">
-                <div className="text-[10px] text-black/60 mb-1">あなたの解答</div>
-                <div className="text-sm leading-relaxed whitespace-pre-wrap text-black">
-                  {wasPerfect ? input : revision}
+            <div className="rounded-xl bg-[var(--color-surface-3)] px-3 py-2.5 mb-3">
+              <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-0.5">
+                最初の解答
+              </div>
+              <div className="text-[12px] leading-relaxed text-[var(--color-text-secondary)] whitespace-pre-wrap">
+                {input}
+              </div>
+            </div>
+
+            <div className="mb-4">
+              <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-1.5 px-1">
+                修正解答
+              </div>
+              <textarea
+                ref={textareaRef}
+                value={revision}
+                onChange={(e) => setRevision(e.target.value)}
+                rows={3}
+                placeholder="ヒントを踏まえて書き直す..."
+                className="focus-ring w-full rounded-xl bg-[var(--color-surface)] shadow-soft text-[var(--color-text)] placeholder:text-[var(--color-text-tertiary)] outline-none px-4 py-3 text-[15px] leading-relaxed resize-none transition-all"
+              />
+            </div>
+
+            <button
+              onClick={reveal}
+              className="btn-primary w-full rounded-2xl font-semibold py-3.5 text-[15px] shadow-primary flex items-center justify-center gap-2 no-tap-highlight"
+            >
+              <Icon name="book" size={16} />
+              解説を見る <span className="text-[11px] opacity-75 ml-1">⌘↵</span>
+            </button>
+          </>
+        )}
+
+        {phase === 'reveal' && (
+          <>
+            <div className="space-y-3 mb-4 fade-in">
+              {/* バッジ */}
+              <div
+                className={`inline-flex items-center gap-1.5 text-[11px] font-semibold rounded-full px-3 py-1.5 ${
+                  wasPerfect
+                    ? 'bg-[var(--color-success)] text-white shadow-primary-sm'
+                    : 'bg-[var(--color-surface-3)] text-[var(--color-text-secondary)]'
+                }`}
+                style={
+                  wasPerfect
+                    ? { boxShadow: '0 4px 12px rgba(52, 199, 89, 0.28)' }
+                    : undefined
+                }
+              >
+                {wasPerfect ? (
+                  <>
+                    <Icon name="sparkles" size={12} />
+                    一発正解
+                  </>
+                ) : (
+                  <>
+                    <Icon name="lightbulb" size={12} />
+                    ヒント参照あり
+                  </>
+                )}
+              </div>
+
+              {(wasPerfect ? input : revision).trim() && (
+                <div className="rounded-2xl bg-[var(--color-surface)] shadow-soft px-4 py-3">
+                  <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-1">
+                    あなたの解答
+                  </div>
+                  <div className="text-[14px] leading-relaxed text-[var(--color-text)] whitespace-pre-wrap">
+                    {wasPerfect ? input : revision}
+                  </div>
+                </div>
+              )}
+
+              <div className="rounded-2xl bg-[var(--color-accent-soft)] px-4 py-3 ring-1 ring-[var(--color-accent-border)]">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase text-[var(--color-accent)] mb-1">
+                  <Icon name="book" size={11} />
+                  解説
+                </div>
+                <div className="text-[14px] leading-relaxed text-[var(--color-text)]">
+                  {card.answer}
                 </div>
               </div>
-            )}
-
-            {/* 解説 */}
-            <div className="rounded-lg border-2 border-[var(--color-accent)] bg-white px-3 py-2.5">
-              <div className="text-[10px] text-[var(--color-accent)] font-semibold mb-1">解説</div>
-              <div className="text-sm leading-relaxed text-black">{card.answer}</div>
             </div>
-          </div>
 
-          <button
-            onClick={next}
-            className="w-full rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] text-white font-semibold py-3 transition-colors mt-auto"
-          >
-            次へ <span className="text-xs opacity-70 ml-1">(Enter)</span>
-          </button>
-        </>
-      )}
+            <button
+              onClick={next}
+              className="btn-primary w-full rounded-2xl font-semibold py-3.5 text-[15px] shadow-primary flex items-center justify-center gap-2 no-tap-highlight mt-auto"
+            >
+              次へ
+              <Icon name="arrow-right" size={16} />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   );
 }

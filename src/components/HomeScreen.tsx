@@ -3,6 +3,7 @@ import type { Card, Category, StudyMode } from '../types';
 import { CATEGORIES } from '../types';
 import { categorize, isDue, isWeak, todayISO } from '../lib/srs';
 import type { CardStatus } from '../lib/srs';
+import Icon from './Icon';
 
 type Props = {
   cards: Card[];
@@ -12,17 +13,17 @@ type Props = {
 };
 
 const STATUS_COLORS: Record<CardStatus, string> = {
-  '未出題': '#9aa3a8',
-  'ミス': '#e85a6a',
-  'ヒット': '#4cc6e6',
-  'コンボ': '#9bd24c',
+  '未出題': 'var(--color-status-untouched)',
+  'ミス': 'var(--color-status-miss)',
+  'ヒット': 'var(--color-status-hit)',
+  'コンボ': 'var(--color-status-combo)',
 };
 const STATUS_ORDER: CardStatus[] = ['未出題', 'ミス', 'ヒット', 'コンボ'];
 
-const MODES: { value: StudyMode; label: string; help: string }[] = [
-  { value: 'due', label: '復習対象のみ', help: '今日が復習日のカード' },
-  { value: 'random', label: '全カードランダム', help: '全カードからシャッフル' },
-  { value: 'weak', label: '苦手カードのみ', help: '間違えやすいカード' },
+const MODES: { value: StudyMode; label: string; help: string; icon: 'target' | 'sparkles' | 'pencil' }[] = [
+  { value: 'due', label: '復習対象のみ', help: '今日が復習日のカード', icon: 'target' },
+  { value: 'random', label: '全カードランダム', help: '全カードからシャッフル', icon: 'sparkles' },
+  { value: 'weak', label: '苦手カードのみ', help: '間違えやすいカード', icon: 'pencil' },
 ];
 
 export default function HomeScreen({ cards, caseProgress, onStart, onOpenCases }: Props) {
@@ -45,36 +46,74 @@ export default function HomeScreen({ cards, caseProgress, onStart, onOpenCases }
   }, [cards]);
 
   return (
-    <div className="mx-auto max-w-md px-4 py-6 pb-24">
-      <header className="mb-4">
-        <h1 className="text-xl font-semibold tracking-tight text-black">SG用語フラッシュカード</h1>
-        <p className="text-xs text-black/60 mt-1">情報セキュリティマネジメント試験</p>
+    <div className="mx-auto max-w-md px-4 pt-8 pb-28">
+      <header className="mb-7">
+        <div className="text-[11px] font-medium tracking-[0.18em] text-[var(--color-text-tertiary)] uppercase mb-1.5">
+          SG · Information Security
+        </div>
+        <h1 className="text-[28px] font-bold tracking-tight text-[var(--color-text)] leading-tight">
+          SG用語フラッシュカード
+        </h1>
+        <p className="text-[13px] text-[var(--color-text-secondary)] mt-1.5">
+          科目A 用語 / 科目B ケース演習
+        </p>
       </header>
 
-      {/* 科目B(ケース演習)エントリ */}
+      {/* 科目B ヒーローカード */}
       <button
         onClick={onOpenCases}
-        className="w-full mb-5 rounded-xl border-2 border-[var(--color-accent)] bg-white hover:bg-black/5 px-4 py-3 transition-colors text-left flex items-center justify-between"
+        className="w-full mb-7 rounded-2xl bg-[var(--color-accent)] text-white shadow-primary text-left transition-transform hover:scale-[1.01] active:scale-[0.99] no-tap-highlight overflow-hidden relative"
+        style={{
+          backgroundImage:
+            'linear-gradient(135deg, #7375e2 0%, #5b5bd6 50%, #4f4fc4 100%)',
+        }}
       >
-        <div>
-          <div className="text-sm font-semibold text-[var(--color-accent)]">科目B 演習 (ケーススタディ)</div>
-          <div className="text-[11px] text-black/60 mt-0.5">
-            長文ケース → 4択で実践演習
-          </div>
+        <div className="absolute -right-6 -top-6 opacity-20">
+          <Icon name="cards" size={120} strokeWidth={1.4} />
         </div>
-        <div className="text-[11px] text-black/60 tabular-nums whitespace-nowrap ml-3">
-          {caseProgress.attempted} / {caseProgress.total}
+        <div className="px-5 py-5 relative">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="rounded-lg bg-white/20 p-1.5 backdrop-blur-sm">
+              <Icon name="doc" size={16} strokeWidth={2.2} />
+            </div>
+            <span className="text-[11px] font-semibold tracking-wider uppercase opacity-90">
+              科目B 演習
+            </span>
+          </div>
+          <div className="text-[18px] font-bold leading-snug mb-1">
+            ケーススタディで実践演習
+          </div>
+          <div className="text-[12px] opacity-85 leading-relaxed">
+            長文を読んで4択で答える、実試験形式
+          </div>
+          <div className="mt-3 flex items-center justify-between">
+            <div className="text-[11px] opacity-80 tabular-nums">
+              <span className="text-[16px] font-semibold">{caseProgress.attempted}</span>
+              <span className="opacity-70"> / {caseProgress.total} ケース</span>
+            </div>
+            <div className="flex items-center gap-1 text-[12px] font-semibold opacity-95">
+              開く <Icon name="chevron-right" size={14} />
+            </div>
+          </div>
         </div>
       </button>
 
-      <div className="text-xs text-black/60 mb-2">科目A(用語暗記)</div>
+      {/* 科目A セクション */}
+      <div className="flex items-center justify-between mb-3 px-1">
+        <div className="text-[11px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)]">
+          科目A · 用語暗記
+        </div>
+        <div className="text-[11px] text-[var(--color-text-tertiary)] tabular-nums">
+          {cards.length}語
+        </div>
+      </div>
 
-      <section className="mb-6">
+      <section className="mb-7 rounded-2xl bg-[var(--color-surface)] shadow-soft px-5 py-5">
         <ProgressBar counts={statusCounts} total={cards.length} />
       </section>
 
-      <section className="mb-5">
-        <Label>カテゴリ</Label>
+      <section className="mb-6">
+        <SectionLabel>カテゴリ</SectionLabel>
         <div className="flex flex-wrap gap-1.5">
           <Pill active={category === 'all'} onClick={() => setCategory('all')}>
             全て
@@ -87,21 +126,35 @@ export default function HomeScreen({ cards, caseProgress, onStart, onOpenCases }
         </div>
       </section>
 
-      <section className="mb-6">
-        <Label>学習モード</Label>
-        <div className="grid grid-cols-1 gap-1.5">
+      <section className="mb-7">
+        <SectionLabel>学習モード</SectionLabel>
+        <div className="grid grid-cols-1 gap-2">
           {MODES.map((m) => (
             <button
               key={m.value}
               onClick={() => setMode(m.value)}
-              className={`text-left rounded-lg border px-3 py-2.5 transition-colors bg-white ${
+              className={`text-left rounded-xl px-4 py-3 transition-all no-tap-highlight flex items-center gap-3 ${
                 mode === m.value
-                  ? 'border-[var(--color-accent)] border-2'
-                  : 'border-[var(--color-border)] hover:bg-black/5'
+                  ? 'bg-[var(--color-accent-soft)] ring-1 ring-[var(--color-accent-border)]'
+                  : 'bg-[var(--color-surface)] shadow-soft hover:bg-[var(--color-surface-2)]'
               }`}
             >
-              <div className="text-sm font-medium text-black">{m.label}</div>
-              <div className="text-xs text-black/60 mt-0.5">{m.help}</div>
+              <div
+                className={`rounded-lg p-2 ${
+                  mode === m.value
+                    ? 'bg-[var(--color-accent)] text-white'
+                    : 'bg-[var(--color-surface-3)] text-[var(--color-text-secondary)]'
+                }`}
+              >
+                <Icon name={m.icon} size={16} />
+              </div>
+              <div className="flex-1">
+                <div className="text-[14px] font-semibold text-[var(--color-text)]">{m.label}</div>
+                <div className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">{m.help}</div>
+              </div>
+              {mode === m.value && (
+                <Icon name="check" size={16} className="text-[var(--color-accent)]" />
+              )}
             </button>
           ))}
         </div>
@@ -110,9 +163,16 @@ export default function HomeScreen({ cards, caseProgress, onStart, onOpenCases }
       <button
         disabled={filtered.length === 0}
         onClick={() => onStart(mode, category)}
-        className="w-full rounded-xl bg-[var(--color-accent)] hover:bg-[var(--color-accent-hover)] disabled:bg-white disabled:text-black/40 disabled:border disabled:border-[var(--color-border)] text-white font-semibold py-3.5 transition-colors"
+        className="btn-primary w-full rounded-2xl font-semibold py-4 text-[15px] shadow-primary disabled:shadow-none flex items-center justify-center gap-2 no-tap-highlight"
       >
-        {filtered.length > 0 ? `学習開始（${filtered.length}枚）` : '対象カードがありません'}
+        {filtered.length > 0 ? (
+          <>
+            <Icon name="play" size={15} />
+            学習開始 <span className="opacity-80">（{filtered.length}枚）</span>
+          </>
+        ) : (
+          <>対象カードがありません</>
+        )}
       </button>
     </div>
   );
@@ -122,23 +182,30 @@ function ProgressBar({ counts, total }: { counts: Record<CardStatus, number>; to
   const denom = total === 0 ? 1 : total;
   return (
     <div>
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-4 gap-2 mb-4">
         {STATUS_ORDER.map((s) => (
           <div key={s} className="text-center">
-            <div className="text-[11px] font-medium tracking-wide" style={{ color: STATUS_COLORS[s] }}>
+            <div
+              className="text-[10px] font-semibold tracking-wider uppercase mb-0.5"
+              style={{ color: STATUS_COLORS[s] }}
+            >
               {s}
             </div>
-            <div className="text-2xl font-semibold tabular-nums" style={{ color: STATUS_COLORS[s] }}>
+            <div
+              className="text-[22px] font-bold tabular-nums leading-none"
+              style={{ color: STATUS_COLORS[s] }}
+            >
               {counts[s]}
             </div>
           </div>
         ))}
       </div>
-      <div className="h-2.5 rounded-full bg-white border border-[var(--color-border)] overflow-hidden flex">
+      <div className="h-2 rounded-full bg-[var(--color-surface-3)] overflow-hidden flex shadow-inner-soft">
         {STATUS_ORDER.map((s) =>
           counts[s] > 0 ? (
             <div
               key={s}
+              className="transition-all duration-500"
               style={{
                 width: `${(counts[s] / denom) * 100}%`,
                 backgroundColor: STATUS_COLORS[s],
@@ -151,8 +218,12 @@ function ProgressBar({ counts, total }: { counts: Record<CardStatus, number>; to
   );
 }
 
-function Label({ children }: { children: React.ReactNode }) {
-  return <div className="text-xs text-black/60 mb-2">{children}</div>;
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="text-[11px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-2 px-1">
+      {children}
+    </div>
+  );
 }
 
 function Pill({
@@ -167,10 +238,10 @@ function Pill({
   return (
     <button
       onClick={onClick}
-      className={`text-xs rounded-full px-3 py-1.5 border transition-colors ${
+      className={`text-[12px] rounded-full px-3 py-1.5 transition-all no-tap-highlight ${
         active
-          ? 'border-[var(--color-accent)] bg-[var(--color-accent)] text-white'
-          : 'border-[var(--color-border)] bg-white text-black hover:bg-black/5'
+          ? 'bg-[var(--color-accent)] text-white shadow-primary-sm font-semibold'
+          : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:text-[var(--color-text)] shadow-soft'
       }`}
     >
       {children}
