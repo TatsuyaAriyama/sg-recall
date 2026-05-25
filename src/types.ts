@@ -59,7 +59,7 @@ export type Meta = {
   totalStudied: number;
 };
 
-export type Screen = 'home' | 'study' | 'result';
+export type Screen = 'home' | 'study' | 'result' | 'caseList' | 'caseStudy' | 'caseResult';
 
 export type SessionResult = {
   correct: number;
@@ -68,4 +68,42 @@ export type SessionResult = {
   prevStreak: number;
   newStreak: number;
   streakIncreased: boolean;
+};
+
+// ===== 科目B (ケーススタディ) =====
+
+export type CaseQuestion = {
+  id: string;
+  prompt: string;
+  choices: string[]; // 4択
+  correct: number;   // 正解インデックス 0..3
+  explanation: string;
+};
+
+export type CaseStudy = {
+  id: string;
+  title: string;
+  category: string;
+  scenario: string;  // 長文。改行は \n
+  questions: CaseQuestion[];
+};
+
+export type CaseProgress = {
+  caseId: string;
+  attemptCount: number;
+  lastScore: number;   // 直近正答率 0..1
+  bestScore: number;   // 最高正答率 0..1
+};
+
+export type CaseSession = {
+  caseId: string;
+  index: number;
+  answers: (number | null)[]; // 各設問で選んだインデックス
+};
+
+export type CaseResult = {
+  caseId: string;
+  correct: number;
+  total: number;
+  answers: { questionId: string; chosen: number; correct: number; isCorrect: boolean }[];
 };

@@ -6,7 +6,9 @@ import type { CardStatus } from '../lib/srs';
 
 type Props = {
   cards: Card[];
+  caseProgress: { total: number; attempted: number };
   onStart: (mode: StudyMode, category: Category | 'all') => void;
+  onOpenCases: () => void;
 };
 
 const STATUS_COLORS: Record<CardStatus, string> = {
@@ -23,7 +25,7 @@ const MODES: { value: StudyMode; label: string; help: string }[] = [
   { value: 'weak', label: '苦手カードのみ', help: '間違えやすいカード' },
 ];
 
-export default function HomeScreen({ cards, onStart }: Props) {
+export default function HomeScreen({ cards, caseProgress, onStart, onOpenCases }: Props) {
   const [mode, setMode] = useState<StudyMode>('due');
   const [category, setCategory] = useState<Category | 'all'>('all');
   const today = todayISO();
@@ -44,10 +46,28 @@ export default function HomeScreen({ cards, onStart }: Props) {
 
   return (
     <div className="mx-auto max-w-md px-4 py-6 pb-24">
-      <header className="mb-6">
+      <header className="mb-4">
         <h1 className="text-xl font-semibold tracking-tight text-black">SG用語フラッシュカード</h1>
-        <p className="text-xs text-black/60 mt-1">情報セキュリティマネジメント試験 / 書いて覚える</p>
+        <p className="text-xs text-black/60 mt-1">情報セキュリティマネジメント試験</p>
       </header>
+
+      {/* 科目B(ケース演習)エントリ */}
+      <button
+        onClick={onOpenCases}
+        className="w-full mb-5 rounded-xl border-2 border-[var(--color-accent)] bg-white hover:bg-black/5 px-4 py-3 transition-colors text-left flex items-center justify-between"
+      >
+        <div>
+          <div className="text-sm font-semibold text-[var(--color-accent)]">科目B 演習 (ケーススタディ)</div>
+          <div className="text-[11px] text-black/60 mt-0.5">
+            長文ケース → 4択で実践演習
+          </div>
+        </div>
+        <div className="text-[11px] text-black/60 tabular-nums whitespace-nowrap ml-3">
+          {caseProgress.attempted} / {caseProgress.total}
+        </div>
+      </button>
+
+      <div className="text-xs text-black/60 mb-2">科目A(用語暗記)</div>
 
       <section className="mb-6">
         <ProgressBar counts={statusCounts} total={cards.length} />
