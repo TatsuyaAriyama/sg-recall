@@ -28,10 +28,10 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
     requestAnimationFrame(() => textareaRef.current?.focus());
   }, [card.id]);
 
-  const evaluation = useMemo(() => evaluate(input, card.keywords), [input, card.keywords]);
+  const evaluation = useMemo(() => evaluate(input, card.keywords, card.term), [input, card.keywords]);
 
   function check() {
-    const ev = evaluate(input, card.keywords);
+    const ev = evaluate(input, card.keywords, card.term);
     if (ev.passed) {
       setWasPerfect(true);
       setPhase('reveal');

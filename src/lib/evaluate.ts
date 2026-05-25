@@ -19,25 +19,58 @@ export function normalize(s: string): string {
     .replace(/[Ａ-Ｚａ-ｚ０-９]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0xfee0));
 }
 
-export function evaluate(userAnswer: string, keywords: Keyword[]): EvaluationResult {
-  const text = normalize(userAnswer);
+/**
+ * 用語名そのものに含まれる文字列を、ユーザー回答からも事前に除去する。
+ * これで「リスク移転」の解答に「移転」と書いただけではヒット扱いにならない。
+ * 用語名は丸ごと除去 + 括弧内表記も別途除去対象。
+ */
+function stripTermFromAnswer(answer: string, term: string): string {
+  const variants: string[] = [];
+  const stripped = term.replace(/[(（].*?[)）]/g, '').trim();
+  if (stripped) variants.push(stripped);
+  const inParens = [...term.matchAll(/[(（](.*?)[)）]/g)].map((m) => m[1].trim()).filter(Boolean);
+  variants.push(...inParens);
+  // 全部から取り除く
+  let out = answer;
+  for (const v of variants) {
+    if (!v) continue;
+    out = out.split(v).join('');
+  }
+  return out;
+}
+
+export function evaluate(userAnswer: string, keywords: Keyword[], term: string = ''): EvaluationResult {
+  // 用語名はユーザー回答から事前に除去（用語そのものを書いただけで通らないように）
+  const cleaned = term ? stripTermFromAnswer(userAnswer, term) : userAnswer;
+  const text = normalize(cleaned);
+  const termNorm = term ? normalize(term) : '';
+
   const matched: string[] = [];
   const missing: string[] = [];
   let hit = 0;
+  let total = 0;
 
   for (const group of keywords) {
     const synonyms = Array.isArray(group) ? group : [group];
-    const found = synonyms.find((syn) => text.includes(normalize(syn)));
+    // 用語名に含まれる同義語は「用語の写し」とみなして除外
+    const validSyns = termNorm
+      ? synonyms.filter((s) => !termNorm.includes(normalize(s)))
+      : synonyms;
+    if (validSyns.length === 0) {
+      // グループ全体が用語のエコーだった場合は評価対象から外す
+      continue;
+    }
+    total++;
+    const found = validSyns.find((syn) => text.includes(normalize(syn)));
     if (found) {
       hit++;
       matched.push(found);
     } else {
-      missing.push(synonyms[0]);
+      missing.push(validSyns[0]);
     }
   }
 
-  const total = keywords.length;
-  const passed = total === 0 ? true : hit / total >= PASS_RATIO;
+  const passed = total === 0 ? false : hit / total >= PASS_RATIO;
 
   return { matchedGroups: hit, totalGroups: total, matched, missing, passed };
 }
