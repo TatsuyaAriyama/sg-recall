@@ -74,9 +74,9 @@ export function categorize(card: Card): CardStatus {
   if (attempts === 0) return '未出題';
   // interval が 1 のまま = 直近で間違えてリセットされた状態
   if (card.interval <= 1) return 'ミス';
-  // 1〜2回連続正解（interval 3 or 7）
-  if (card.interval < 14) return 'ヒット';
-  // 3回以上連続正解（interval 14 以上）
+  // 1回正解（interval 3）= ヒット
+  if (card.interval < 7) return 'ヒット';
+  // 2回以上連続正解（interval 7 以上）= コンボ
   return 'コンボ';
 }
 
