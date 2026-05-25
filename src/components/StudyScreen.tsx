@@ -31,6 +31,14 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
   const evaluation = useMemo(() => evaluate(input, card.keywords, card.term), [input, card.keywords]);
 
   function check() {
+    // 入力ゼロのときは評価せず、いきなりヒント画面へ
+    if (input.trim().length === 0) {
+      setWasPerfect(false);
+      setRevision('');
+      setPhase('hint');
+      requestAnimationFrame(() => textareaRef.current?.focus());
+      return;
+    }
     const ev = evaluate(input, card.keywords, card.term);
     if (ev.passed) {
       setWasPerfect(true);
@@ -129,11 +137,19 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
             </div>
             <button
               onClick={check}
-              disabled={input.trim().length === 0}
-              className="btn-primary w-full rounded-2xl font-semibold py-3.5 text-[15px] shadow-primary disabled:shadow-none flex items-center justify-center gap-2 no-tap-highlight"
+              className="btn-primary w-full rounded-2xl font-semibold py-3.5 text-[15px] shadow-primary flex items-center justify-center gap-2 no-tap-highlight"
             >
-              <Icon name="check-circle" size={16} />
-              答え合わせ <span className="text-[11px] opacity-75 ml-1">⌘↵</span>
+              {input.trim().length === 0 ? (
+                <>
+                  <Icon name="lightbulb" size={16} />
+                  ヒントを見る <span className="text-[11px] opacity-75 ml-1">⌘↵</span>
+                </>
+              ) : (
+                <>
+                  <Icon name="check-circle" size={16} />
+                  答え合わせ <span className="text-[11px] opacity-75 ml-1">⌘↵</span>
+                </>
+              )}
             </button>
           </>
         )}
@@ -192,14 +208,16 @@ export default function StudyScreen({ card, index, total, onAnswer, onQuit }: Pr
               )}
             </div>
 
-            <div className="rounded-xl bg-[var(--color-surface-3)] px-3 py-2.5 mb-3">
-              <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-0.5">
-                最初の解答
+            {input.trim().length > 0 && (
+              <div className="rounded-xl bg-[var(--color-surface-3)] px-3 py-2.5 mb-3">
+                <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-0.5">
+                  最初の解答
+                </div>
+                <div className="text-[12px] leading-relaxed text-[var(--color-text-secondary)] whitespace-pre-wrap">
+                  {input}
+                </div>
               </div>
-              <div className="text-[12px] leading-relaxed text-[var(--color-text-secondary)] whitespace-pre-wrap">
-                {input}
-              </div>
-            </div>
+            )}
 
             <div className="mb-4">
               <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-1.5 px-1">
