@@ -1,9 +1,8 @@
 import type { NewsItem } from '../types';
 
-// 厳選した代表的セキュリティインシデント 18件
-// year 降順で並べる (新しい順)
-// URL は読み物として価値ある外部リンク (Wikipedia / IPA / JPCERT 等)
-// 万一 404 になった場合はリンクのみ差し替えれば OK
+// 全URL HTTP 200 確認済み (2026-05-25 時点)
+// 日本語ソース 13件、英語版Wikipedia 5件 (日本語版が無いもの)
+// year 降順で表示。リンクが切れた場合は url のみ差し替えれば動作する。
 export const news: NewsItem[] = [
   {
     id: 'n2023-ntt',
@@ -11,9 +10,9 @@ export const news: NewsItem[] = [
     year: 2023,
     category: '内部不正',
     summary:
-      'コールセンター業務委託先で特権アカウントを悪用し顧客情報928万件を10年以上にわたり持ち出していた事案。特権ID管理と委託先監査の欠落が浮き彫りに。',
+      'コールセンター業務委託先で特権アカウントを悪用し、約928万件の顧客情報を10年以上にわたり持ち出していた事案。特権ID管理と委託先監査の欠落が浮き彫りに。',
     terms: ['内部不正', '特権ID管理', '委託先管理', '個人情報漏洩'],
-    source: 'IPA',
+    source: 'IPA 10大脅威2024',
     url: 'https://www.ipa.go.jp/security/10threats/10threats2024.html',
   },
   {
@@ -22,10 +21,10 @@ export const news: NewsItem[] = [
     year: 2023,
     category: 'ゼロデイ攻撃',
     summary:
-      'ファイル転送ソフト MOVEit のゼロデイ SQLi をランサム集団 Cl0p が悪用。BBC、英国航空、米国エネルギー省など2,000組織以上が被害。',
+      'ファイル転送ソフト MOVEit のゼロデイ SQLi (CVE-2023-34362) を Cl0p ランサム集団が悪用。BBC、英国航空、米国エネルギー省など2,000組織以上が被害を受けた。',
     terms: ['ゼロデイ攻撃', 'SQLインジェクション', 'サプライチェーン攻撃'],
-    source: 'Wikipedia',
-    url: 'https://en.wikipedia.org/wiki/2023_MOVEit_data_breach',
+    source: 'JPCERT/CC',
+    url: 'https://www.jpcert.or.jp/at/2023/at230015.html',
   },
   {
     id: 'n2022-toyota',
@@ -33,9 +32,9 @@ export const news: NewsItem[] = [
     year: 2022,
     category: 'サプライチェーン攻撃',
     summary:
-      '部品メーカー小島プレス工業がランサムウェア感染。サプライチェーンが寸断され、トヨタは1日で国内14工場28ラインを停止。',
+      '部品メーカー小島プレス工業がランサムウェア感染。サプライチェーンが寸断され、トヨタは1日で国内14工場28ラインを停止する事態に。',
     terms: ['サプライチェーン攻撃', 'ランサムウェア', 'BCP (事業継続計画)'],
-    source: 'IPA',
+    source: 'IPA 10大脅威2023',
     url: 'https://www.ipa.go.jp/security/10threats/10threats2023.html',
   },
   {
@@ -46,7 +45,7 @@ export const news: NewsItem[] = [
     summary:
       '業務委託先の中国法人が日本ユーザーの個人情報にアクセス可能だった問題。データの越境管理と委託先監督が問われ、政府も実態調査に動いた。',
     terms: ['委託先管理', 'データ保護', 'GDPR'],
-    source: 'Wikipedia',
+    source: 'Wikipedia (日)',
     url: 'https://ja.wikipedia.org/wiki/LINE_(%E3%82%A2%E3%83%97%E3%83%AA%E3%82%B1%E3%83%BC%E3%82%B7%E3%83%A7%E3%83%B3)',
   },
   {
@@ -55,9 +54,9 @@ export const news: NewsItem[] = [
     year: 2021,
     category: 'ゼロデイ攻撃',
     summary:
-      'Java の汎用ログライブラリ Log4j の任意コード実行脆弱性 (CVE-2021-44228)。世界中の数千万システムが影響を受けたとされ、SBOM 重要性の契機に。',
+      'Java の汎用ログライブラリ Log4j に任意コード実行脆弱性 (CVE-2021-44228)。世界中の数千万システムが影響を受け、SBOM の重要性が再認識される契機となった。',
     terms: ['ゼロデイ攻撃', 'SBOM (ソフトウェア部品表)', 'サプライチェーン攻撃'],
-    source: 'Wikipedia',
+    source: 'Wikipedia (日)',
     url: 'https://ja.wikipedia.org/wiki/Log4Shell',
   },
   {
@@ -66,10 +65,10 @@ export const news: NewsItem[] = [
     year: 2021,
     category: 'ランサムウェア',
     summary:
-      '米最大級の燃料パイプラインがランサムウェア DarkSide に感染し操業停止。約440万ドルの身代金を支払い、米東海岸でガソリン不足が発生。',
+      '米最大級の燃料パイプラインがランサムウェア DarkSide に感染し操業停止。約440万ドルの身代金を支払い、米東海岸でガソリン不足が発生した。',
     terms: ['ランサムウェア', 'インシデント対応', 'BCP (事業継続計画)'],
-    source: 'Wikipedia',
-    url: 'https://ja.wikipedia.org/wiki/Colonial_Pipeline%E3%82%B5%E3%82%A4%E3%83%90%E3%83%BC%E6%94%BB%E6%92%83',
+    source: 'Wikipedia (英)',
+    url: 'https://en.wikipedia.org/wiki/Colonial_Pipeline_ransomware_attack',
   },
   {
     id: 'n2021-kaseya',
@@ -77,10 +76,10 @@ export const news: NewsItem[] = [
     year: 2021,
     category: 'サプライチェーン攻撃',
     summary:
-      'IT 管理ソフト Kaseya VSA のゼロデイを悪用し、MSP 経由で1,500社以上に REvil ランサムウェアが拡散。',
+      'IT 管理ソフト Kaseya VSA のゼロデイを悪用し、MSP 経由で1,500社以上に REvil ランサムウェアが拡散。サプライチェーン攻撃の象徴的事例。',
     terms: ['サプライチェーン攻撃', 'ランサムウェア', 'ゼロデイ攻撃'],
-    source: 'Wikipedia',
-    url: 'https://en.wikipedia.org/wiki/Kaseya_VSA_ransomware_attack',
+    source: 'IPA 10大脅威2022',
+    url: 'https://www.ipa.go.jp/security/10threats/10threats2022.html',
   },
   {
     id: 'n2020-twitter',
@@ -88,10 +87,10 @@ export const news: NewsItem[] = [
     year: 2020,
     category: 'ソーシャルエンジニアリング',
     summary:
-      'Twitter 社員が電話で標的型ソーシャルエンジニアリングを受け、内部管理ツールへアクセス。Obama・Musk 等130アカウントが乗っ取られ Bitcoin 詐欺ツイートが拡散。',
+      'Twitter 社員が電話で標的型ソーシャルエンジニアリングを受け、内部管理ツールへアクセス。Obama・Musk 等130アカウントが乗っ取られ、Bitcoin 詐欺ツイートが拡散。',
     terms: ['ソーシャルエンジニアリング', '内部不正', '特権ID管理'],
-    source: 'Wikipedia',
-    url: 'https://ja.wikipedia.org/wiki/2020%E5%B9%B4%E3%81%AETwitter%E3%82%A2%E3%82%AB%E3%82%A6%E3%83%B3%E3%83%88%E4%B9%97%E3%81%A3%E5%8F%96%E3%82%8A',
+    source: 'Wikipedia (英)',
+    url: 'https://en.wikipedia.org/wiki/2020_Twitter_account_hijacking',
   },
   {
     id: 'n2020-solarwinds',
@@ -101,8 +100,8 @@ export const news: NewsItem[] = [
     summary:
       'IT 管理ソフト SolarWinds のアップデートに悪意あるコードが混入。米国財務省・国土安全保障省・大手企業など18,000組織が侵害された大規模 APT。',
     terms: ['サプライチェーン攻撃', 'APT (高度持続的脅威)', 'デジタル署名'],
-    source: 'Wikipedia',
-    url: 'https://ja.wikipedia.org/wiki/SolarWinds',
+    source: 'Wikipedia (英)',
+    url: 'https://en.wikipedia.org/wiki/2020_United_States_federal_government_data_breach',
   },
   {
     id: 'n2020-mitsubishi',
@@ -112,7 +111,7 @@ export const news: NewsItem[] = [
     summary:
       'ウイルス対策ソフトのゼロデイを起点に侵入。社員と取引先約8,000人分の個人情報、防衛関連情報の漏洩疑いが報じられた。',
     terms: ['標的型攻撃', 'APT (高度持続的脅威)', 'ゼロデイ攻撃'],
-    source: 'Wikipedia',
+    source: 'Wikipedia (日)',
     url: 'https://ja.wikipedia.org/wiki/%E4%B8%89%E8%8F%B1%E9%9B%BB%E6%A9%9F',
   },
   {
@@ -121,10 +120,10 @@ export const news: NewsItem[] = [
     year: 2019,
     category: 'クラウド',
     summary:
-      'AWS WAF の設定不備と SSRF を悪用し、S3 内クレジットカード申込情報1億600万件が流出。クラウド責任共有モデルの代表例。',
+      'AWS WAF の設定不備と SSRF を悪用し、S3 内クレジットカード申込情報1億600万件が流出。クラウド責任共有モデルを語る上で外せない代表例。',
     terms: ['SSRF (サーバサイドリクエストフォージェリ)', 'クラウド', 'IAM (Identity and Access Management)'],
-    source: 'Wikipedia',
-    url: 'https://en.wikipedia.org/wiki/2019_Capital_One_data_breach',
+    source: 'Wikipedia (英)',
+    url: 'https://en.wikipedia.org/wiki/Capital_One',
   },
   {
     id: 'n2019-7pay',
@@ -132,9 +131,9 @@ export const news: NewsItem[] = [
     year: 2019,
     category: '認証設計',
     summary:
-      'セブン&アイの決済サービスが多要素認証なし・パスワード再設定の設計欠陥で多発する不正利用。被害約3,800万円、リリース2ヶ月で終了発表。',
+      'セブン&アイの決済サービスが多要素認証なし・パスワード再設定の設計欠陥で多発する不正利用。被害約3,800万円、リリース2ヶ月でサービス終了を発表。',
     terms: ['多要素認証 (MFA)', '認証 (Authentication)', 'リスト型攻撃'],
-    source: 'Wikipedia',
+    source: 'Wikipedia (日)',
     url: 'https://ja.wikipedia.org/wiki/7pay',
   },
   {
@@ -143,9 +142,9 @@ export const news: NewsItem[] = [
     year: 2018,
     category: '暗号資産',
     summary:
-      'ホットウォレットでの管理とマルチシグ未実装が原因で、攻撃者にNEM約580億円相当を持ち出された。当時史上最大級の暗号資産流出。',
+      'ホットウォレットでの管理とマルチシグ未実装が原因で、攻撃者にNEM約580億円相当を持ち出された。当時史上最大級の暗号資産流出事件。',
     terms: ['鍵管理', '多要素認証 (MFA)', 'インシデント対応'],
-    source: 'Wikipedia',
+    source: 'Wikipedia (日)',
     url: 'https://ja.wikipedia.org/wiki/%E3%82%B3%E3%82%A4%E3%83%B3%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF',
   },
   {
@@ -156,8 +155,8 @@ export const news: NewsItem[] = [
     summary:
       '買収した Starwood の予約システムに4年間侵入されていた。氏名・パスポート番号・カード情報など最大5億件影響。GDPR 制裁金約1.8億ポンドが課された。',
     terms: ['APT (高度持続的脅威)', 'GDPR', '個人情報漏洩'],
-    source: 'Wikipedia',
-    url: 'https://en.wikipedia.org/wiki/2018_Marriott_International_data_breach',
+    source: 'Wikipedia (英)',
+    url: 'https://en.wikipedia.org/wiki/Marriott_International',
   },
   {
     id: 'n2017-equifax',
@@ -167,8 +166,8 @@ export const news: NewsItem[] = [
     summary:
       '米信用情報大手 Equifax で Apache Struts 2 既知脆弱性のパッチ未適用が原因。氏名・生年月日・社会保障番号・住所など1.47億件が流出。',
     terms: ['脆弱性管理', 'パッチ管理', '個人情報漏洩'],
-    source: 'Wikipedia',
-    url: 'https://en.wikipedia.org/wiki/2017_Equifax_data_breach',
+    source: 'Wikipedia (日)',
+    url: 'https://ja.wikipedia.org/wiki/Equifax',
   },
   {
     id: 'n2017-wannacry',
@@ -176,9 +175,9 @@ export const news: NewsItem[] = [
     year: 2017,
     category: 'ランサムウェア',
     summary:
-      'Windows SMB 脆弱性 (EternalBlue) を悪用し、150カ国・30万台以上を暗号化。英 NHS は救急受入停止、日本企業も多数影響。',
+      'Windows SMB 脆弱性 (EternalBlue) を悪用し、150カ国・30万台以上を暗号化。英 NHS は救急受入停止、日本企業も多数影響を受けた。',
     terms: ['ランサムウェア', 'ゼロデイ攻撃', 'パッチ管理'],
-    source: 'Wikipedia',
+    source: 'Wikipedia (日)',
     url: 'https://ja.wikipedia.org/wiki/WannaCry',
   },
   {
@@ -189,8 +188,8 @@ export const news: NewsItem[] = [
     summary:
       '取引先を装ったメール添付ファイル開封を起点に侵入され、パスポート番号含む顧客情報793万人分が流出。日本における標的型攻撃の代表事例。',
     terms: ['標的型攻撃', 'フィッシング', 'BEC (ビジネスメール詐欺)'],
-    source: 'IPA',
-    url: 'https://www.ipa.go.jp/security/anshin/measures/jirei.html',
+    source: 'Wikipedia (日)',
+    url: 'https://ja.wikipedia.org/wiki/JTB',
   },
   {
     id: 'n2014-benesse',
@@ -198,9 +197,9 @@ export const news: NewsItem[] = [
     year: 2014,
     category: '内部不正',
     summary:
-      '業務委託先の派遣SEが顧客DBから持ち出し、名簿業者に売却。日本国内の内部不正・委託先管理を抜本的に見直す契機となり、個人情報保護法改正にも影響。',
+      '業務委託先の派遣SEが顧客DBから持ち出し、名簿業者に売却した事件。日本国内の内部不正・委託先管理を抜本的に見直す契機となり、個人情報保護法改正にも影響。',
     terms: ['内部不正', '委託先管理', 'DLP (Data Loss Prevention)', '個人情報保護法'],
-    source: 'Wikipedia',
-    url: 'https://ja.wikipedia.org/wiki/%E3%83%99%E3%83%8D%E3%83%83%E3%82%BB%E9%A1%A7%E5%AE%A2%E6%83%85%E5%A0%B1%E6%B5%81%E5%87%BA%E4%BA%8B%E4%BB%B6',
+    source: 'Wikipedia (日)',
+    url: 'https://ja.wikipedia.org/wiki/%E3%83%99%E3%83%8D%E3%83%83%E3%82%BB%E5%80%8B%E4%BA%BA%E6%83%85%E5%A0%B1%E6%B5%81%E5%87%BA%E4%BA%8B%E4%BB%B6',
   },
 ];
