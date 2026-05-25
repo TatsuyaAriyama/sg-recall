@@ -9,8 +9,10 @@ import Icon from './Icon';
 type Props = {
   cards: Card[];
   caseProgress: { total: number; attempted: number };
+  newsCount: number;
   onStart: (mode: StudyMode, category: Category | 'all') => void;
   onOpenCases: () => void;
+  onOpenNews: () => void;
 };
 
 const STATUS_COLORS: Record<CardStatus, string> = {
@@ -27,7 +29,7 @@ const MODES: { value: StudyMode; label: string; help: string; icon: 'target' | '
   { value: 'weak', label: '苦手カードのみ', help: '間違えやすいカード', icon: 'pencil' },
 ];
 
-export default function HomeScreen({ cards, caseProgress, onStart, onOpenCases }: Props) {
+export default function HomeScreen({ cards, caseProgress, newsCount, onStart, onOpenCases, onOpenNews }: Props) {
   const [mode, setMode] = useState<StudyMode>('due');
   const [category, setCategory] = useState<Category | 'all'>('all');
   const today = todayISO();
@@ -124,6 +126,25 @@ export default function HomeScreen({ cards, caseProgress, onStart, onOpenCases }
             </div>
           </div>
         </div>
+      </button>
+
+      {/* 暇つぶしニュース */}
+      <button
+        onClick={onOpenNews}
+        className="w-full mb-7 rounded-2xl bg-[var(--color-surface)] shadow-soft hover:shadow-card-hover transition-all hover:scale-[1.005] active:scale-[0.995] no-tap-highlight text-left px-4 py-3.5 flex items-center gap-3"
+      >
+        <div className="rounded-xl bg-[var(--color-surface-3)] p-2 text-[var(--color-text-secondary)] flex-shrink-0">
+          <Icon name="book" size={18} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[14px] font-semibold text-[var(--color-text)] truncate">
+            セキュリティ事例集
+          </div>
+          <div className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
+            実際のインシデントから学ぶ {newsCount}件 · 暇つぶしに
+          </div>
+        </div>
+        <Icon name="chevron-right" size={16} className="text-[var(--color-text-tertiary)]" />
       </button>
 
       {/* 科目A セクション */}

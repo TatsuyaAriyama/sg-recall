@@ -59,7 +59,19 @@ export type Meta = {
   totalStudied: number;
 };
 
-export type Screen = 'home' | 'study' | 'result' | 'caseList' | 'caseStudy' | 'caseResult';
+export type Screen = 'home' | 'study' | 'result' | 'caseList' | 'caseStudy' | 'caseResult' | 'news';
+
+// ===== セキュリティ事例 (ニュース) =====
+export type NewsItem = {
+  id: string;
+  title: string;
+  year: number;
+  category: string;       // ランサムウェア / 標的型 / 内部不正 など
+  summary: string;        // 50〜100文字
+  terms: string[];        // 関連用語 (本アプリの用語と紐付け)
+  source: string;         // 'Wikipedia' / 'IPA' など
+  url: string;            // 外部リンク
+};
 
 export type SessionResult = {
   correct: number;

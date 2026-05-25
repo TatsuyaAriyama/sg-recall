@@ -16,12 +16,14 @@ import { loadCaseProgress, recordResult, saveCaseProgress } from './lib/cases';
 import { markCorrect, markWrong, isDue, isWeak, shuffle, todayISO } from './lib/srs';
 import { updateStreak } from './lib/streak';
 import { cases } from './data/cases';
+import { news } from './data/news';
 import HomeScreen from './components/HomeScreen';
 import StudyScreen from './components/StudyScreen';
 import ResultScreen from './components/ResultScreen';
 import CaseListScreen from './components/CaseListScreen';
 import CaseStudyScreen from './components/CaseStudyScreen';
 import CaseResultScreen from './components/CaseResultScreen';
+import NewsScreen from './components/NewsScreen';
 
 type Session = {
   queue: string[];
@@ -58,7 +60,8 @@ type Action =
   | { type: 'startCase'; caseId: string }
   | { type: 'caseAnswer'; chosen: number }
   | { type: 'caseFinish' }
-  | { type: 'closeCase' };
+  | { type: 'closeCase' }
+  | { type: 'openNews' };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -192,6 +195,9 @@ function reducer(state: State, action: Action): State {
     case 'closeCase':
       return { ...state, screen: 'caseList', caseSession: null, caseResult: null };
 
+    case 'openNews':
+      return { ...state, screen: 'news' };
+
     default:
       return state;
   }
@@ -297,8 +303,10 @@ export default function App() {
         <HomeScreen
           cards={state.cards}
           caseProgress={{ total: cases.length, attempted: Object.keys(state.caseProgress).length }}
+          newsCount={news.length}
           onStart={start}
           onOpenCases={() => dispatch({ type: 'openCases' })}
+          onOpenNews={() => dispatch({ type: 'openNews' })}
         />
       )}
       {state.screen === 'study' && currentCard && state.session && (
@@ -345,6 +353,10 @@ export default function App() {
           onAgain={() => dispatch({ type: 'startCase', caseId: currentCase.id })}
           onList={() => dispatch({ type: 'closeCase' })}
         />
+      )}
+
+      {state.screen === 'news' && (
+        <NewsScreen news={news} onBack={() => dispatch({ type: 'home' })} />
       )}
     </div>
   );

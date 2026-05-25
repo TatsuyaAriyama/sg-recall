@@ -5,6 +5,17 @@ import './index.css';
 import App from './App';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY as string | undefined;
+const ADSENSE_CLIENT = import.meta.env.VITE_ADSENSE_CLIENT as string | undefined;
+
+// AdSense loader を env 設定時のみ動的注入
+if (ADSENSE_CLIENT && !document.querySelector('script[data-adsense-loader]')) {
+  const s = document.createElement('script');
+  s.async = true;
+  s.crossOrigin = 'anonymous';
+  s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT}`;
+  s.dataset.adsenseLoader = 'true';
+  document.head.appendChild(s);
+}
 
 const root = createRoot(document.getElementById('root')!);
 
