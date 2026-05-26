@@ -39,6 +39,47 @@ function stripTermFromAnswer(answer: string, term: string): string {
   return out;
 }
 
+/**
+ * 模範解答 (card.answer) のうち、ユーザーが触れられていない (= missing) キーワード群の
+ * 出現箇所だけを `____` で伏字にして返す。
+ *
+ * 「形と分量」が見えて、「どの言葉を補えばよいか」も視覚的に伝わるヒント文を作る目的。
+ * - matched 済みの観点はそのまま見せる（既に書けたことを肯定）
+ * - 連続する ____ は1つに畳む（読みやすさのため）
+ */
+export function buildMaskedAnswer(
+  answer: string,
+  keywords: Keyword[],
+  userAnswer: string,
+  term: string = '',
+): string {
+  const cleaned = term ? stripTermFromAnswer(userAnswer, term) : userAnswer;
+  const textNorm = normalize(cleaned);
+  const termNorm = term ? normalize(term) : '';
+
+  let masked = answer;
+  for (const group of keywords) {
+    const synonyms = Array.isArray(group) ? group : [group];
+    const validSyns = termNorm
+      ? synonyms.filter((s) => !termNorm.includes(normalize(s)))
+      : synonyms;
+    if (validSyns.length === 0) continue;
+
+    const isMatched = validSyns.some((syn) => textNorm.includes(normalize(syn)));
+    if (isMatched) continue;
+
+    // 未ヒットのグループだけ模範解答の該当箇所を伏字に
+    for (const syn of validSyns) {
+      if (!syn) continue;
+      masked = masked.split(syn).join('____');
+    }
+  }
+
+  // 「____や____」のように隣接した伏字は読みづらいので1つに統合
+  masked = masked.replace(/(____)(?:\s*\1)+/g, '____');
+  return masked;
+}
+
 export function evaluate(userAnswer: string, keywords: Keyword[], term: string = ''): EvaluationResult {
   // 用語名はユーザー回答から事前に除去（用語そのものを書いただけで通らないように）
   const cleaned = term ? stripTermFromAnswer(userAnswer, term) : userAnswer;

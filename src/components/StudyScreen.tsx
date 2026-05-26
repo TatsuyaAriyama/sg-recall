@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Card } from '../types';
-import { evaluate } from '../lib/evaluate';
+import { buildMaskedAnswer, evaluate } from '../lib/evaluate';
 import Icon from './Icon';
 
 type Props = {
@@ -30,6 +30,10 @@ export default function StudyScreen({ card, index, total, onMark, onNext, onQuit
   }, [card.id]);
 
   const evaluation = useMemo(() => evaluate(input, card.keywords, card.term), [input, card.keywords]);
+  const maskedAnswer = useMemo(
+    () => buildMaskedAnswer(card.answer, card.keywords, input, card.term),
+    [card.answer, card.keywords, input, card.term],
+  );
 
   function check() {
     // 入力ゼロのときは評価せず、いきなりヒント画面へ
@@ -162,39 +166,25 @@ export default function StudyScreen({ card, index, total, onMark, onNext, onQuit
         {phase === 'hint' && (
           <>
             <div className="rounded-2xl bg-[var(--color-surface)] shadow-soft px-4 py-4 mb-3 slide-up">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[var(--color-accent)]">
                   <Icon name="lightbulb" size={14} />
-                  ヒント
+                  解答の骨組み
                 </div>
                 <span className="text-[11px] tabular-nums text-[var(--color-text-secondary)]">
                   {evaluation.matchedGroups} / {evaluation.totalGroups} 要素
                 </span>
               </div>
 
-              {evaluation.matched.length > 0 && (
-                <div className="mb-3">
-                  <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-1.5">
-                    含まれている観点
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {evaluation.matched.map((m) => (
-                      <span
-                        key={m}
-                        className="text-[11px] rounded-full bg-[var(--color-surface-3)] text-[var(--color-text-secondary)] px-2.5 py-1 flex items-center gap-1"
-                      >
-                        <Icon name="check" size={11} className="text-[var(--color-success)]" />
-                        {m}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* 模範解答の骨組み（未ヒットのキーワードだけ伏字） */}
+              <div className="text-[14px] leading-[1.85] text-[var(--color-text)] mb-3">
+                <MaskedAnswer text={maskedAnswer} />
+              </div>
 
               {evaluation.missing.length > 0 && (
-                <div>
+                <div className="pt-3 border-t border-[var(--color-surface-3)]">
                   <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-accent)] mb-1.5">
-                    抜けている観点
+                    <span className="font-mono">____</span> に入れたい言葉
                   </div>
                   <div className="flex flex-wrap gap-1.5">
                     {evaluation.missing.map((m) => (
@@ -207,7 +197,32 @@ export default function StudyScreen({ card, index, total, onMark, onNext, onQuit
                     ))}
                   </div>
                   <div className="text-[12px] text-[var(--color-text-secondary)] mt-3 leading-relaxed">
-                    上のキーワードを踏まえて修正してください。
+                    骨組みの <span className="font-mono text-[var(--color-accent)]">____</span> を上の言葉で埋めるイメージで、自分の文として書き直してみましょう。
+                  </div>
+                </div>
+              )}
+
+              {evaluation.missing.length === 0 && evaluation.matched.length > 0 && (
+                <div className="pt-3 border-t border-[var(--color-surface-3)] text-[12px] text-[var(--color-text-secondary)] leading-relaxed">
+                  必要な観点は揃っています。表現を整えて書き直してみましょう。
+                </div>
+              )}
+
+              {evaluation.matched.length > 0 && (
+                <div className="pt-3 mt-3 border-t border-[var(--color-surface-3)]">
+                  <div className="text-[10px] font-semibold tracking-wider uppercase text-[var(--color-text-tertiary)] mb-1.5">
+                    含まれていた観点
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {evaluation.matched.map((m) => (
+                      <span
+                        key={m}
+                        className="text-[11px] rounded-full bg-[var(--color-surface-3)] text-[var(--color-text-secondary)] px-2.5 py-1 flex items-center gap-1"
+                      >
+                        <Icon name="check" size={11} className="text-[var(--color-success)]" />
+                        {m}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -310,5 +325,30 @@ export default function StudyScreen({ card, index, total, onMark, onNext, onQuit
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * 模範解答内の `____` を「下線付きの空欄」として描画する。
+ * 「形が見える + どこに何を入れるか分かる」ヒントとして機能。
+ */
+function MaskedAnswer({ text }: { text: string }) {
+  const parts = text.split(/(____+)/);
+  return (
+    <>
+      {parts.map((p, i) =>
+        /^____+$/.test(p) ? (
+          <span
+            key={i}
+            className="inline-block align-baseline mx-0.5 px-2 text-transparent select-none border-b-2 border-[var(--color-accent)] bg-[var(--color-accent-soft)] rounded-sm"
+            aria-label="空欄"
+          >
+            ____
+          </span>
+        ) : (
+          <span key={i}>{p}</span>
+        ),
+      )}
+    </>
   );
 }
