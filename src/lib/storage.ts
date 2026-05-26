@@ -1,7 +1,31 @@
 import type { Card, Keyword, Meta } from '../types';
 import { initialCards } from '../data/cards';
 import { keywordsById } from '../data/keywords';
+import { additionalCards } from '../data/cards_v2';
+import { additionalKeywordsById } from '../data/keywords_v2';
 import { todayISO } from './srs';
+
+// 既存 235 語 + 追加 200 語 = 435 語。id が衝突する場合は seed 側 (cards.ts) を優先。
+const allSeeds = (() => {
+  const seen = new Set<string>();
+  const out: typeof initialCards = [];
+  for (const c of initialCards) {
+    if (seen.has(c.id)) continue;
+    seen.add(c.id);
+    out.push(c);
+  }
+  for (const c of additionalCards) {
+    if (seen.has(c.id)) continue;
+    seen.add(c.id);
+    out.push(c as any);
+  }
+  return out;
+})();
+
+const allKeywords: Record<string, Keyword[]> = {
+  ...additionalKeywordsById,
+  ...keywordsById,
+};
 
 const CARDS_KEY = 'simple1-sg-cards-v1';
 const META_KEY = 'simple1-sg-meta-v1';
@@ -20,8 +44,8 @@ export function loadCards(): Card[] {
     stored = {};
   }
 
-  return initialCards.map((seed) => {
-    const keywords: Keyword[] = keywordsById[seed.id] ?? [];
+  return allSeeds.map((seed) => {
+    const keywords: Keyword[] = allKeywords[seed.id] ?? [];
     const s = stored[seed.id];
     if (!s) {
       return {

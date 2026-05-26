@@ -7,17 +7,34 @@ import type {
   CaseStudy,
   Category,
   Meta,
+  MockExamHistory,
+  MockExamResult,
+  MockExamSession,
+  MockMode,
+  QuizResult,
+  QuizSession,
   Screen,
   SessionResult,
   StudyMode,
+  SyllabusTag,
 } from './types';
 import { loadCards, loadMeta, saveCards, saveMeta } from './lib/storage';
 import { loadCaseProgress, recordResult, saveCaseProgress } from './lib/cases';
 import { markCorrect, markWrong, isDue, isWeak, shuffle, todayISO } from './lib/srs';
 import { updateStreak } from './lib/streak';
 import { cases } from './data/cases';
+import { additionalCases } from './data/cases_v2';
 import { news } from './data/news';
 import { readings } from './data/readings';
+import { quizQuestions } from './data/quiz';
+import {
+  appendMockHistory,
+  gradeMockSubjectA,
+  gradeQuiz,
+  loadMockHistory,
+  selectMockSubjectA,
+  selectQuizIds,
+} from './lib/quiz';
 import HomeScreen from './components/HomeScreen';
 import StudyScreen from './components/StudyScreen';
 import ResultScreen from './components/ResultScreen';
@@ -27,6 +44,13 @@ import CaseResultScreen from './components/CaseResultScreen';
 import NewsScreen from './components/NewsScreen';
 import ReadingsScreen from './components/ReadingsScreen';
 import ReadingDetailScreen from './components/ReadingDetailScreen';
+import QuizConfigScreen from './components/QuizConfigScreen';
+import QuizScreen from './components/QuizScreen';
+import QuizResultScreen from './components/QuizResultScreen';
+import MockConfigScreen from './components/MockConfigScreen';
+import MockExamScreen from './components/MockExamScreen';
+import MockResultScreen from './components/MockResultScreen';
+import SyllabusMapScreen from './components/SyllabusMapScreen';
 
 type Session = {
   queue: string[];
@@ -52,10 +76,24 @@ type State = {
 
   // 読み物
   readingId: string | null;
+
+  // 科目A 四択演習
+  quizSession: QuizSession | null;
+  quizResult: QuizResult | null;
+  lastQuizConfig: { syllabus: SyllabusTag | 'all'; count: number } | null;
+
+  // 模擬試験
+  mockSession: MockExamSession | null;
+  mockResult: MockExamResult | null;
+  mockHistory: MockExamHistory;
+  lastMockMode: MockMode | null;
+  // 結果画面で出題内訳を見せるため、最後の出題セットを保持
+  lastMockIds: string[];
+  lastMockAnswers: (number | null)[];
 };
 
 type Action =
-  | { type: 'init'; cards: Card[]; meta: Meta; caseProgress: Record<string, CaseProgress> }
+  | { type: 'init'; cards: Card[]; meta: Meta; caseProgress: Record<string, CaseProgress>; mockHistory: MockExamHistory }
   | { type: 'start'; ids: string[]; mode: StudyMode; category: Category | 'all' }
   | { type: 'mark'; correct: boolean; userAnswer: string }
   | { type: 'advance' }
@@ -70,12 +108,43 @@ type Action =
   | { type: 'openNews' }
   | { type: 'openReadings' }
   | { type: 'openReading'; readingId: string }
-  | { type: 'closeReading' };
+  | { type: 'closeReading' }
+  // 科目A 四択
+  | { type: 'openQuizConfig' }
+  | { type: 'startQuiz'; ids: string[]; syllabus: SyllabusTag | 'all'; count: number }
+  | { type: 'quizAnswer'; index: number; choice: number }
+  | { type: 'finishQuiz' }
+  | { type: 'closeQuizResult' }
+  // 模擬試験
+  | { type: 'openMockConfig' }
+  | { type: 'startMock'; mode: MockMode; ids: string[]; durationSec: number }
+  | { type: 'mockAnswer'; index: number; choice: number }
+  | { type: 'finishMock' }
+  | { type: 'closeMockResult' }
+  // シラバスマップ
+  | { type: 'openSyllabusMap' };
+
+const allCases = (() => {
+  const seen = new Set<string>();
+  const merged: CaseStudy[] = [];
+  for (const c of [...cases, ...additionalCases]) {
+    if (seen.has(c.id)) continue;
+    seen.add(c.id);
+    merged.push(c);
+  }
+  return merged;
+})();
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
     case 'init':
-      return { ...state, cards: action.cards, meta: action.meta, caseProgress: action.caseProgress };
+      return {
+        ...state,
+        cards: action.cards,
+        meta: action.meta,
+        caseProgress: action.caseProgress,
+        mockHistory: action.mockHistory,
+      };
 
     case 'start':
       if (action.ids.length === 0) return state;
@@ -95,7 +164,6 @@ function reducer(state: State, action: Action): State {
       };
 
     case 'mark': {
-      // 解説表示時点でカード状態 + セッション統計を更新（index は進めない）
       if (!state.session) return state;
       const id = state.session.queue[state.session.index];
       const cards = state.cards.map((c) => {
@@ -112,7 +180,6 @@ function reducer(state: State, action: Action): State {
     }
 
     case 'advance': {
-      // 「次へ」押下時。index を進めるだけ
       if (!state.session) return state;
       return {
         ...state,
@@ -143,13 +210,19 @@ function reducer(state: State, action: Action): State {
     }
 
     case 'home':
-      return { ...state, screen: 'home', session: null };
+      return {
+        ...state,
+        screen: 'home',
+        session: null,
+        quizSession: null,
+        mockSession: null,
+      };
 
     case 'openCases':
       return { ...state, screen: 'caseList', caseResult: null };
 
     case 'startCase': {
-      const c = cases.find((x) => x.id === action.caseId);
+      const c = allCases.find((x) => x.id === action.caseId);
       if (!c) return state;
       return {
         ...state,
@@ -175,7 +248,7 @@ function reducer(state: State, action: Action): State {
 
     case 'caseFinish': {
       if (!state.caseSession) return state;
-      const c = cases.find((x) => x.id === state.caseSession!.caseId);
+      const c = allCases.find((x) => x.id === state.caseSession!.caseId);
       if (!c) return state;
       const answers = state.caseSession.answers;
       let correct = 0;
@@ -216,6 +289,102 @@ function reducer(state: State, action: Action): State {
     case 'closeReading':
       return { ...state, screen: 'readings', readingId: null };
 
+    // ===== 四択演習 =====
+    case 'openQuizConfig':
+      return { ...state, screen: 'quizConfig', quizResult: null };
+
+    case 'startQuiz':
+      if (action.ids.length === 0) return state;
+      return {
+        ...state,
+        screen: 'quiz',
+        quizResult: null,
+        lastQuizConfig: { syllabus: action.syllabus, count: action.count },
+        quizSession: {
+          ids: action.ids,
+          index: 0,
+          answers: new Array(action.ids.length).fill(null),
+          syllabusFilter: action.syllabus,
+        },
+      };
+
+    case 'quizAnswer': {
+      if (!state.quizSession) return state;
+      const answers = state.quizSession.answers.slice();
+      answers[action.index] = action.choice;
+      return {
+        ...state,
+        quizSession: { ...state.quizSession, answers },
+      };
+    }
+
+    case 'finishQuiz': {
+      if (!state.quizSession) return state;
+      const result = gradeQuiz(
+        quizQuestions,
+        state.quizSession.ids,
+        state.quizSession.answers,
+      );
+      return { ...state, screen: 'quizResult', quizResult: result, quizSession: null };
+    }
+
+    case 'closeQuizResult':
+      return { ...state, screen: 'quizConfig', quizResult: null };
+
+    // ===== 模擬試験 =====
+    case 'openMockConfig':
+      return { ...state, screen: 'mockConfig', mockResult: null };
+
+    case 'startMock':
+      if (action.ids.length === 0) return state;
+      return {
+        ...state,
+        screen: 'mockExam',
+        mockResult: null,
+        lastMockMode: action.mode,
+        mockSession: {
+          mode: action.mode,
+          questionIds: action.ids,
+          caseIds: [],
+          answers: new Array(action.ids.length).fill(null),
+          caseAnswers: {},
+          startedAt: Date.now(),
+          durationSec: action.durationSec,
+        },
+      };
+
+    case 'mockAnswer': {
+      if (!state.mockSession) return state;
+      const answers = state.mockSession.answers.slice();
+      answers[action.index] = action.choice;
+      return { ...state, mockSession: { ...state.mockSession, answers } };
+    }
+
+    case 'finishMock': {
+      if (!state.mockSession) return state;
+      const elapsed = Math.floor((Date.now() - state.mockSession.startedAt) / 1000);
+      const ids = state.mockSession.questionIds;
+      const answers = state.mockSession.answers;
+      const result = gradeMockSubjectA(quizQuestions, ids, answers, elapsed);
+      const history = appendMockHistory(result);
+      return {
+        ...state,
+        screen: 'mockResult',
+        mockResult: result,
+        mockSession: null,
+        mockHistory: history,
+        lastMockIds: ids,
+        lastMockAnswers: answers,
+      };
+    }
+
+    case 'closeMockResult':
+      return { ...state, screen: 'mockConfig', mockResult: null };
+
+    // ===== シラバスマップ =====
+    case 'openSyllabusMap':
+      return { ...state, screen: 'syllabusMap' };
+
     default:
       return state;
   }
@@ -232,6 +401,15 @@ const INITIAL_STATE: State = {
   caseSession: null,
   caseResult: null,
   readingId: null,
+  quizSession: null,
+  quizResult: null,
+  lastQuizConfig: null,
+  mockSession: null,
+  mockResult: null,
+  mockHistory: [],
+  lastMockMode: null,
+  lastMockIds: [],
+  lastMockAnswers: [],
 };
 
 export default function App() {
@@ -244,6 +422,7 @@ export default function App() {
       cards: loadCards(),
       meta: loadMeta(),
       caseProgress: loadCaseProgress(),
+      mockHistory: loadMockHistory(),
     });
   }, []);
 
@@ -276,7 +455,7 @@ export default function App() {
   // ケース演習: 設問終了で自動的に結果へ
   useEffect(() => {
     if (!state.caseSession) return;
-    const c = cases.find((x) => x.id === state.caseSession!.caseId);
+    const c = allCases.find((x) => x.id === state.caseSession!.caseId);
     if (!c) return;
     if (state.caseSession.index >= c.questions.length) {
       dispatch({ type: 'caseFinish' });
@@ -301,11 +480,49 @@ export default function App() {
     }
   }
 
+  function startQuiz(syllabus: SyllabusTag | 'all', count: number) {
+    const ids = selectQuizIds(quizQuestions, syllabus, count);
+    dispatch({ type: 'startQuiz', ids, syllabus, count });
+  }
+
+  function restartQuiz() {
+    if (state.lastQuizConfig) {
+      startQuiz(state.lastQuizConfig.syllabus, state.lastQuizConfig.count);
+    } else {
+      dispatch({ type: 'closeQuizResult' });
+    }
+  }
+
+  function startMock(mode: MockMode) {
+    // mode から問題数と制限時間を決定
+    let count = 48;
+    let duration = 60 * 60; // 60min
+    if (mode === 'short') {
+      count = 20;
+      duration = 30 * 60;
+    } else if (mode === 'subjectA') {
+      count = 48;
+      duration = 60 * 60;
+    } else {
+      // full は将来拡張 (現状は subjectA と同じ)
+      count = 48;
+      duration = 60 * 60;
+    }
+    const ids = selectMockSubjectA(quizQuestions, count);
+    if (ids.length === 0) return;
+    dispatch({ type: 'startMock', mode, ids, durationSec: duration });
+  }
+
+  function restartMock() {
+    if (state.lastMockMode) startMock(state.lastMockMode);
+    else dispatch({ type: 'closeMockResult' });
+  }
+
   // 現在のケース
   const currentCase: CaseStudy | null = useMemo(() => {
     const id = state.caseSession?.caseId ?? state.caseResult?.caseId;
     if (!id) return null;
-    return cases.find((c) => c.id === id) ?? null;
+    return allCases.find((c) => c.id === id) ?? null;
   }, [state.caseSession, state.caseResult]);
 
   if (state.cards.length === 0) {
@@ -321,13 +538,17 @@ export default function App() {
       {state.screen === 'home' && (
         <HomeScreen
           cards={state.cards}
-          caseProgress={{ total: cases.length, attempted: Object.keys(state.caseProgress).length }}
+          caseProgress={{ total: allCases.length, attempted: Object.keys(state.caseProgress).length }}
           newsCount={news.length}
           readingsCount={readings.length}
+          quizCount={quizQuestions.length}
           onStart={start}
           onOpenCases={() => dispatch({ type: 'openCases' })}
           onOpenNews={() => dispatch({ type: 'openNews' })}
           onOpenReadings={() => dispatch({ type: 'openReadings' })}
+          onOpenQuiz={() => dispatch({ type: 'openQuizConfig' })}
+          onOpenMock={() => dispatch({ type: 'openMockConfig' })}
+          onOpenSyllabusMap={() => dispatch({ type: 'openSyllabusMap' })}
         />
       )}
       {state.screen === 'study' && currentCard && state.session && (
@@ -350,7 +571,7 @@ export default function App() {
 
       {state.screen === 'caseList' && (
         <CaseListScreen
-          cases={cases}
+          cases={allCases}
           progress={state.caseProgress}
           onSelect={(id) => dispatch({ type: 'startCase', caseId: id })}
           onBack={() => dispatch({ type: 'home' })}
@@ -392,7 +613,6 @@ export default function App() {
         (() => {
           const r = readings.find((x) => x.id === state.readingId);
           if (!r) return null;
-          // 次の記事 (一覧順で次, 末尾なら先頭にループ)
           const idx = readings.findIndex((x) => x.id === r.id);
           const nextItem = readings[(idx + 1) % readings.length];
           return (
@@ -403,6 +623,71 @@ export default function App() {
             />
           );
         })()}
+
+      {/* 科目A 四択演習 */}
+      {state.screen === 'quizConfig' && (
+        <QuizConfigScreen
+          questions={quizQuestions}
+          onStart={startQuiz}
+          onBack={() => dispatch({ type: 'home' })}
+        />
+      )}
+      {state.screen === 'quiz' && state.quizSession && (
+        <QuizScreen
+          questions={quizQuestions}
+          ids={state.quizSession.ids}
+          answers={state.quizSession.answers}
+          onAnswer={(index, choice) => dispatch({ type: 'quizAnswer', index, choice })}
+          onFinish={() => dispatch({ type: 'finishQuiz' })}
+          onQuit={() => dispatch({ type: 'home' })}
+        />
+      )}
+      {state.screen === 'quizResult' && state.quizResult && (
+        <QuizResultScreen
+          questions={quizQuestions}
+          result={state.quizResult}
+          onAgain={restartQuiz}
+          onHome={() => dispatch({ type: 'home' })}
+        />
+      )}
+
+      {/* 模擬試験 */}
+      {state.screen === 'mockConfig' && (
+        <MockConfigScreen
+          questions={quizQuestions}
+          history={state.mockHistory}
+          onStart={startMock}
+          onBack={() => dispatch({ type: 'home' })}
+        />
+      )}
+      {state.screen === 'mockExam' && state.mockSession && (
+        <MockExamScreen
+          questions={quizQuestions}
+          session={state.mockSession}
+          onAnswer={(index, choice) => dispatch({ type: 'mockAnswer', index, choice })}
+          onFinish={() => dispatch({ type: 'finishMock' })}
+          onQuit={() => dispatch({ type: 'home' })}
+        />
+      )}
+      {state.screen === 'mockResult' && state.mockResult && (
+        <MockResultScreen
+          questions={quizQuestions}
+          result={state.mockResult}
+          ids={state.lastMockIds}
+          answers={state.lastMockAnswers}
+          onRetry={restartMock}
+          onHome={() => dispatch({ type: 'home' })}
+        />
+      )}
+
+      {/* シラバスマップ */}
+      {state.screen === 'syllabusMap' && (
+        <SyllabusMapScreen
+          cards={state.cards}
+          quiz={quizQuestions}
+          onBack={() => dispatch({ type: 'home' })}
+        />
+      )}
     </div>
   );
 }

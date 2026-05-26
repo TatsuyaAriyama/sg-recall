@@ -17,7 +17,9 @@ type IconProps = {
     | 'sparkles'
     | 'target'
     | 'list'
-    | 'pencil';
+    | 'pencil'
+    | 'refresh'
+    | 'map';
   size?: number;
   className?: string;
   strokeWidth?: number;
@@ -111,6 +113,21 @@ const paths: Record<IconProps['name'], JSX.Element> = {
     <>
       <path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z" />
       <path d="m15 5 4 4" />
+    </>
+  ),
+  refresh: (
+    <>
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16" />
+      <path d="M3 21v-5h5" />
+    </>
+  ),
+  map: (
+    <>
+      <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z" />
+      <path d="M9 4v13" />
+      <path d="M15 7v13" />
     </>
   ),
 };

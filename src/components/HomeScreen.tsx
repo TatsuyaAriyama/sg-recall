@@ -11,10 +11,14 @@ type Props = {
   caseProgress: { total: number; attempted: number };
   newsCount: number;
   readingsCount: number;
+  quizCount: number;
   onStart: (mode: StudyMode, category: Category | 'all') => void;
   onOpenCases: () => void;
   onOpenNews: () => void;
   onOpenReadings: () => void;
+  onOpenQuiz: () => void;
+  onOpenMock: () => void;
+  onOpenSyllabusMap: () => void;
 };
 
 const STATUS_COLORS: Record<CardStatus, string> = {
@@ -36,10 +40,14 @@ export default function HomeScreen({
   caseProgress,
   newsCount,
   readingsCount,
+  quizCount,
   onStart,
   onOpenCases,
   onOpenNews,
   onOpenReadings,
+  onOpenQuiz,
+  onOpenMock,
+  onOpenSyllabusMap,
 }: Props) {
   const [mode, setMode] = useState<StudyMode>('due');
   const [category, setCategory] = useState<Category | 'all'>('all');
@@ -100,43 +108,93 @@ export default function HomeScreen({
         </p>
       </header>
 
-      {/* 科目B ヒーローカード */}
+      {/* 模擬試験 ヒーローカード — 合格を最短で狙う最重要動線 */}
       <button
-        onClick={onOpenCases}
-        className="w-full mb-7 rounded-2xl bg-[var(--color-accent)] text-white shadow-primary text-left transition-transform hover:scale-[1.01] active:scale-[0.99] no-tap-highlight overflow-hidden relative"
+        onClick={onOpenMock}
+        className="w-full mb-3 rounded-2xl bg-[var(--color-accent)] text-white shadow-primary text-left transition-transform hover:scale-[1.01] active:scale-[0.99] no-tap-highlight overflow-hidden relative"
         style={{
           backgroundImage:
             'linear-gradient(135deg, #7375e2 0%, #5b5bd6 50%, #4f4fc4 100%)',
         }}
       >
         <div className="absolute -right-6 -top-6 opacity-20">
-          <Icon name="cards" size={120} strokeWidth={1.4} />
+          <Icon name="target" size={120} strokeWidth={1.4} />
         </div>
         <div className="px-5 py-5 relative">
           <div className="flex items-center gap-2 mb-3">
             <div className="rounded-lg bg-white/20 p-1.5 backdrop-blur-sm">
-              <Icon name="doc" size={16} strokeWidth={2.2} />
+              <Icon name="target" size={16} strokeWidth={2.2} />
             </div>
             <span className="text-[11px] font-semibold tracking-wider uppercase opacity-90">
-              科目B 演習
+              模擬試験
             </span>
           </div>
           <div className="text-[18px] font-bold leading-snug mb-1">
-            ケーススタディで実践演習
+            本番形式で実力チェック
           </div>
           <div className="text-[12px] opacity-85 leading-relaxed">
-            長文を読んで4択で答える、実試験形式
+            タイマー付き · 60% で合格判定 · シラバス比率に準拠
           </div>
           <div className="mt-3 flex items-center justify-between">
             <div className="text-[11px] opacity-80 tabular-nums">
-              <span className="text-[16px] font-semibold">{caseProgress.attempted}</span>
-              <span className="opacity-70"> / {caseProgress.total} ケース</span>
+              科目A {quizCount} 問から出題
             </div>
             <div className="flex items-center gap-1 text-[12px] font-semibold opacity-95">
-              開く <Icon name="chevron-right" size={14} />
+              開始 <Icon name="chevron-right" size={14} />
             </div>
           </div>
         </div>
+      </button>
+
+      {/* 四択演習 + シラバスマップ (2列) */}
+      <div className="grid grid-cols-2 gap-2.5 mb-3">
+        <button
+          onClick={onOpenQuiz}
+          className="rounded-2xl bg-[var(--color-surface)] shadow-soft hover:shadow-card-hover transition-all hover:scale-[1.005] active:scale-[0.995] no-tap-highlight text-left px-4 py-4 flex flex-col gap-2"
+        >
+          <div className="rounded-xl bg-[var(--color-accent-soft)] p-2 text-[var(--color-accent)] w-fit">
+            <Icon name="list" size={18} />
+          </div>
+          <div>
+            <div className="text-[14px] font-semibold text-[var(--color-text)]">四択演習</div>
+            <div className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
+              分野別に過去問形式
+            </div>
+          </div>
+        </button>
+        <button
+          onClick={onOpenSyllabusMap}
+          className="rounded-2xl bg-[var(--color-surface)] shadow-soft hover:shadow-card-hover transition-all hover:scale-[1.005] active:scale-[0.995] no-tap-highlight text-left px-4 py-4 flex flex-col gap-2"
+        >
+          <div className="rounded-xl bg-[var(--color-surface-3)] p-2 text-[var(--color-text-secondary)] w-fit">
+            <Icon name="map" size={18} />
+          </div>
+          <div>
+            <div className="text-[14px] font-semibold text-[var(--color-text)]">シラバスマップ</div>
+            <div className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
+              分野別の進捗と弱点
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* 科目B ケース演習 */}
+      <button
+        onClick={onOpenCases}
+        className="w-full mb-7 rounded-2xl bg-[var(--color-surface)] shadow-soft hover:shadow-card-hover transition-all hover:scale-[1.005] active:scale-[0.995] no-tap-highlight text-left px-4 py-3.5 flex items-center gap-3"
+      >
+        <div className="rounded-xl bg-[var(--color-surface-3)] p-2 text-[var(--color-text-secondary)] flex-shrink-0">
+          <Icon name="doc" size={18} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[14px] font-semibold text-[var(--color-text)] truncate">
+            科目B ケース演習
+          </div>
+          <div className="text-[11px] text-[var(--color-text-secondary)] mt-0.5 tabular-nums">
+            長文ケース {caseProgress.attempted}/{caseProgress.total} 実施
+          </div>
+        </div>
+        <Icon name="chevron-right" size={16} className="text-[var(--color-text-tertiary)]" />
       </button>
 
       {/* 通勤時間で読む: 読み物 */}
