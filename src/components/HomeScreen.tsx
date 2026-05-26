@@ -10,9 +10,11 @@ type Props = {
   cards: Card[];
   caseProgress: { total: number; attempted: number };
   newsCount: number;
+  readingsCount: number;
   onStart: (mode: StudyMode, category: Category | 'all') => void;
   onOpenCases: () => void;
   onOpenNews: () => void;
+  onOpenReadings: () => void;
 };
 
 const STATUS_COLORS: Record<CardStatus, string> = {
@@ -29,7 +31,16 @@ const MODES: { value: StudyMode; label: string; help: string; icon: 'target' | '
   { value: 'weak', label: '苦手カードのみ', help: '間違えやすいカード', icon: 'pencil' },
 ];
 
-export default function HomeScreen({ cards, caseProgress, newsCount, onStart, onOpenCases, onOpenNews }: Props) {
+export default function HomeScreen({
+  cards,
+  caseProgress,
+  newsCount,
+  readingsCount,
+  onStart,
+  onOpenCases,
+  onOpenNews,
+  onOpenReadings,
+}: Props) {
   const [mode, setMode] = useState<StudyMode>('due');
   const [category, setCategory] = useState<Category | 'all'>('all');
   const today = todayISO();
@@ -128,7 +139,26 @@ export default function HomeScreen({ cards, caseProgress, newsCount, onStart, on
         </div>
       </button>
 
-      {/* 暇つぶしニュース */}
+      {/* 通勤時間で読む: 読み物 */}
+      <button
+        onClick={onOpenReadings}
+        className="w-full mb-2.5 rounded-2xl bg-[var(--color-surface)] shadow-soft hover:shadow-card-hover transition-all hover:scale-[1.005] active:scale-[0.995] no-tap-highlight text-left px-4 py-3.5 flex items-center gap-3"
+      >
+        <div className="rounded-xl bg-[var(--color-accent-soft)] p-2 text-[var(--color-accent)] flex-shrink-0">
+          <Icon name="lightbulb" size={18} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[14px] font-semibold text-[var(--color-text)] truncate">
+            セキュリティ読み物
+          </div>
+          <div className="text-[11px] text-[var(--color-text-secondary)] mt-0.5">
+            実務とAIのトピックを 3〜5 分で · {readingsCount}本
+          </div>
+        </div>
+        <Icon name="chevron-right" size={16} className="text-[var(--color-text-tertiary)]" />
+      </button>
+
+      {/* セキュリティ事例集 */}
       <button
         onClick={onOpenNews}
         className="w-full mb-7 rounded-2xl bg-[var(--color-surface)] shadow-soft hover:shadow-card-hover transition-all hover:scale-[1.005] active:scale-[0.995] no-tap-highlight text-left px-4 py-3.5 flex items-center gap-3"

@@ -17,6 +17,7 @@ import { markCorrect, markWrong, isDue, isWeak, shuffle, todayISO } from './lib/
 import { updateStreak } from './lib/streak';
 import { cases } from './data/cases';
 import { news } from './data/news';
+import { readings } from './data/readings';
 import HomeScreen from './components/HomeScreen';
 import StudyScreen from './components/StudyScreen';
 import ResultScreen from './components/ResultScreen';
@@ -24,6 +25,8 @@ import CaseListScreen from './components/CaseListScreen';
 import CaseStudyScreen from './components/CaseStudyScreen';
 import CaseResultScreen from './components/CaseResultScreen';
 import NewsScreen from './components/NewsScreen';
+import ReadingsScreen from './components/ReadingsScreen';
+import ReadingDetailScreen from './components/ReadingDetailScreen';
 
 type Session = {
   queue: string[];
@@ -46,6 +49,9 @@ type State = {
   caseProgress: Record<string, CaseProgress>;
   caseSession: CaseSession | null;
   caseResult: CaseResult | null;
+
+  // 読み物
+  readingId: string | null;
 };
 
 type Action =
@@ -61,7 +67,10 @@ type Action =
   | { type: 'caseAnswer'; chosen: number }
   | { type: 'caseFinish' }
   | { type: 'closeCase' }
-  | { type: 'openNews' };
+  | { type: 'openNews' }
+  | { type: 'openReadings' }
+  | { type: 'openReading'; readingId: string }
+  | { type: 'closeReading' };
 
 function reducer(state: State, action: Action): State {
   switch (action.type) {
@@ -198,6 +207,15 @@ function reducer(state: State, action: Action): State {
     case 'openNews':
       return { ...state, screen: 'news' };
 
+    case 'openReadings':
+      return { ...state, screen: 'readings', readingId: null };
+
+    case 'openReading':
+      return { ...state, screen: 'readingDetail', readingId: action.readingId };
+
+    case 'closeReading':
+      return { ...state, screen: 'readings', readingId: null };
+
     default:
       return state;
   }
@@ -213,6 +231,7 @@ const INITIAL_STATE: State = {
   caseProgress: {},
   caseSession: null,
   caseResult: null,
+  readingId: null,
 };
 
 export default function App() {
@@ -304,9 +323,11 @@ export default function App() {
           cards={state.cards}
           caseProgress={{ total: cases.length, attempted: Object.keys(state.caseProgress).length }}
           newsCount={news.length}
+          readingsCount={readings.length}
           onStart={start}
           onOpenCases={() => dispatch({ type: 'openCases' })}
           onOpenNews={() => dispatch({ type: 'openNews' })}
+          onOpenReadings={() => dispatch({ type: 'openReadings' })}
         />
       )}
       {state.screen === 'study' && currentCard && state.session && (
@@ -358,6 +379,30 @@ export default function App() {
       {state.screen === 'news' && (
         <NewsScreen news={news} onBack={() => dispatch({ type: 'home' })} />
       )}
+
+      {state.screen === 'readings' && (
+        <ReadingsScreen
+          readings={readings}
+          onSelect={(id) => dispatch({ type: 'openReading', readingId: id })}
+          onBack={() => dispatch({ type: 'home' })}
+        />
+      )}
+
+      {state.screen === 'readingDetail' && state.readingId &&
+        (() => {
+          const r = readings.find((x) => x.id === state.readingId);
+          if (!r) return null;
+          // 次の記事 (一覧順で次, 末尾なら先頭にループ)
+          const idx = readings.findIndex((x) => x.id === r.id);
+          const nextItem = readings[(idx + 1) % readings.length];
+          return (
+            <ReadingDetailScreen
+              reading={r}
+              onBack={() => dispatch({ type: 'closeReading' })}
+              onNext={() => dispatch({ type: 'openReading', readingId: nextItem.id })}
+            />
+          );
+        })()}
     </div>
   );
 }

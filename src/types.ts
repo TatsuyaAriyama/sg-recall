@@ -59,7 +59,35 @@ export type Meta = {
   totalStudied: number;
 };
 
-export type Screen = 'home' | 'study' | 'result' | 'caseList' | 'caseStudy' | 'caseResult' | 'news';
+export type Screen =
+  | 'home'
+  | 'study'
+  | 'result'
+  | 'caseList'
+  | 'caseStudy'
+  | 'caseResult'
+  | 'news'
+  | 'readings'
+  | 'readingDetail';
+
+// ===== 読み物 (コラム) =====
+export type ReadingCategory = '実務' | 'AI' | '基礎';
+
+export type ReadingSection = {
+  heading?: string; // 省略時は見出しなしの本文ブロック
+  body: string;     // 改行で段落分割
+};
+
+export type ReadingItem = {
+  id: string;
+  title: string;
+  subtitle: string;       // 一覧用の1行要約
+  category: ReadingCategory;
+  tag: string;            // 主題タグ (例: 'ゼロトラスト')
+  readMinutes: number;    // 読了目安 (分)
+  sections: ReadingSection[];
+  takeaway?: string;      // 末尾の「持ち帰り」 (任意)
+};
 
 // ===== セキュリティ事例 (ニュース) =====
 export type NewsItem = {
